@@ -1,9 +1,13 @@
 from __future__ import annotations
 
+import json
+import time
 from dataclasses import dataclass
 from typing import Optional
+from uuid import uuid4
 
 from services.audio import AudioKind
+from services.clients import get_redis_client
 
 
 @dataclass
@@ -15,6 +19,22 @@ class InterruptResult:
     status: str = "queued"
 
 
+@dataclass
+class InterruptRecord:
+    """Full record describing an interrupt awaiting processing."""
+
+    interrupt_id: str
+    kind: AudioKind
+    persona: Optional[str]
+    message: Optional[str]
+    created_at: float
+    status: str
+
+
+_INTERRUPT_QUEUE_KEY = "stream:interrupts:queue"
+_INTERRUPT_DATA_KEY = "stream:interrupts:data"
+
+
 def register_interrupt(
     *,
     kind: AudioKind,
@@ -22,4 +42,65 @@ def register_interrupt(
     message: Optional[str],
 ) -> InterruptResult:
     """Queue a new interrupt (superchat or gift) for processing."""
-    raise NotImplementedError("register_interrupt is not implemented yet.")
+
+    if kind == AudioKind.GENERAL:
+        raise ValueError("Interrupts must be either superchat or gift.")
+
+    client = get_redis_client()
+    interrupt_id = uuid4().hex
+    created_at = time.time()
+
+    record = {
+        "interrupt_id": interrupt_id,
+        "kind": kind.value,
+        "persona": persona,
+        "message": message,
+        "status": "queued",
+        "created_at": created_at,
+    }
+
+    client.hset(_INTERRUPT_DATA_KEY, interrupt_id, json.dumps(record))
+    client.rpush(_INTERRUPT_QUEUE_KEY, interrupt_id)
+
+    return InterruptResult(interrupt_id=interrupt_id, kind=kind, status="queued")
+
+
+def pop_next_interrupt() -> Optional[InterruptRecord]:
+    """Pop the next pending interrupt from the queue for processing."""
+
+    client = get_redis_client()
+    interrupt_id = client.lpop(_INTERRUPT_QUEUE_KEY)
+    if interrupt_id is None:
+        return None
+
+    payload = client.hget(_INTERRUPT_DATA_KEY, interrupt_id)
+    if payload is None:
+        return None
+
+    data = json.loads(payload)
+    data["status"] = "processing"
+    data["started_at"] = time.time()
+    client.hset(_INTERRUPT_DATA_KEY, interrupt_id, json.dumps(data))
+
+    return InterruptRecord(
+        interrupt_id=interrupt_id,
+        kind=AudioKind(data["kind"]),
+        persona=data.get("persona"),
+        message=data.get("message"),
+        created_at=data.get("created_at", time.time()),
+        status="processing",
+    )
+
+
+def mark_interrupt_processed(interrupt_id: str, *, status: str = "processed") -> None:
+    """Update an interrupt record to reflect completion or another terminal state."""
+
+    client = get_redis_client()
+    payload = client.hget(_INTERRUPT_DATA_KEY, interrupt_id)
+    if payload is None:
+        return
+
+    data = json.loads(payload)
+    data["status"] = status
+    data["completed_at"] = time.time()
+    client.hset(_INTERRUPT_DATA_KEY, interrupt_id, json.dumps(data))

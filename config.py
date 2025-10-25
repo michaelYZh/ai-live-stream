@@ -7,11 +7,19 @@ load_dotenv(override=True)
 
 BOSON_API_KEY = os.environ["BOSON_API_KEY"]
 BOSON_BASE_URL = os.getenv("BOSON_BASE_URL", "https://hackathon.boson.ai/v1")
+REDIS_URL = os.getenv("REDIS_URL", "redis://localhost:6379/0")
 
 ROOT_DIR = Path(__file__).resolve().parent
-REFERENCE_AUDIO_PATH = ROOT_DIR / "storage" / "reference_audio" / "speed_voice.wav"
+ASSETS_DIR = ROOT_DIR / "assets"
+REFERENCE_AUDIO_DIR = ASSETS_DIR / "reference_audio"
 
 TTS_MODEL = os.getenv("TTS_MODEL", "higgs-audio-generation-Hackathon")
+LLM_MODEL = os.getenv("LLM_MODEL", "Qwen3-32B-non-thinking-Hackathon")
+DEFAULT_STREAMER_PERSONA = os.getenv("DEFAULT_STREAMER_PERSONA", "speed")
+DEFAULT_GIFT_PROMPT = os.getenv(
+    "DEFAULT_GIFT_PROMPT",
+    "A viewer just sent a gift during the livestream. React with excitement and keep the energy high!",
+)
 
 PETER_GRIFFIN_REFERENCE_TRANSCRIPT = """
 I walked into the kitchen and sat down at the table. I looked with a Grimace at the questionable meal Lois
@@ -37,44 +45,27 @@ All right! Ooops! I guess I rip my pants again. I'm on my way! Ready for another
 Hey, guys! Better pack some ice. It's gonna be a hot one. What is that smell.
 """
 
-
-
-PETER_GRIFFIN_VOICEOVER_SCRIPT = """
-The dominant sequence transduction models are based on complex recurrent or convolutional neural networks...
-Woah, woah! Hold up! Trans-what? Recurrent? Bro, you're speaking enchantment table language!
-We propose a new simple network architecture, the Transformer...
-A TRANSFORMER??? NO WAY! ARE WE TALKING OPTIMUS PRIME?! AUTOBOTS, ROLL OUT!
+DEFAULT_SCRIPT = """
+Yo chat, this dude built like a Wi-Fi signal, bruh. 
+Strong for two seconds, then start laggin' outta nowhere, man! 
+Like bro, sit yo goofy self down before the webcam file for trauma insurance, dawg!
 """
 
-PETER_GRIFFIN_SYSTEM_PROMPT = """
-You are a fictional, humorous character inspired by Peter Griffin from *Family Guy*.
-You do NOT mimic the actual voice actor or use copyrighted phrases verbatim, but you
-capture his personality, rhythm, and comedic tone. You are going to roast the research
-paper provided to you.
-
-Personality Traits:
-- Lovable, clumsy, and slightly oblivious
-- Tends to ramble into absurd stories
-- Has a warm but goofy sense of humor
-- Occasionally laughs at his own jokes ("heh-heh")
-- Often makes over-the-top analogies or pop-culture references
-- Balances cluelessness with oddly insightful moments
-
-Speaking Style:
-- Casual and conversational; uses short sentences and slang
-- Frequently starts with “You know what's funny…” or “So I was sittin' there…”
-- Uses light exaggeration and comedic timing
-- Occasionally interrupts himself or adds a self-aware comment
-- Ends jokes with his signature chuckle or awkward pause
-
-Tone Example:
-"So I'm sittin' there watchin' TV, mindin' my own business, and suddenly the remote disappears.
-I'm like, 'Great, Stewie's buildin' another time machine, and I can't even change the channel!'
-Heh-heh, classic Tuesday."
-
-Behavioral Instructions:
-- Keep responses between 1-3 short paragraphs.
-- Stay family-friendly unless the user explicitly requests PG-13 humor.
-- Avoid direct references to real *Family Guy* episodes or copyrighted dialogue.
-- Never imitate the actual Peter Griffin voice — focus on the humor and attitude only.
-"""
+PERSONA_REFERENCES = {
+    "speed": {
+        "path": REFERENCE_AUDIO_DIR / "speed_voice.wav",
+        "transcript": SPEED_REFERENCE_TRANSCRIPT,
+    },
+    "chinese_trump": {
+        "path": REFERENCE_AUDIO_DIR / "chinese_trump_voice.wav",
+        "transcript": CHINESE_TRUMP_REFERENCE_TRANSCRIPT,
+    },
+    "peter_griffin": {
+        "path": REFERENCE_AUDIO_DIR / "peter_griffin_voice.wav",
+        "transcript": PETER_GRIFFIN_REFERENCE_TRANSCRIPT,
+    },
+    "spongebob": {
+        "path": REFERENCE_AUDIO_DIR / "spongebob_voice.wav",
+        "transcript": SPONGEBOB_REFERENCE_TRANSCRIPT,
+    },
+}
