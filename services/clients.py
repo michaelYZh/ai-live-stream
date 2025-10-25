@@ -1,19 +1,7 @@
 from functools import lru_cache
-from typing import TYPE_CHECKING, Any
-
 from openai import OpenAI
-
 from config import BOSON_API_KEY, BOSON_BASE_URL, REDIS_URL
-
-try:
-    import redis
-except ImportError:  # pragma: no cover - handled at runtime
-    redis = None  # type: ignore[assignment]
-
-if TYPE_CHECKING:  # pragma: no cover - typing only
-    from redis import Redis
-else:  # pragma: no cover - typing only
-    Redis = Any
+import redis
 
 
 @lru_cache()
@@ -25,8 +13,4 @@ def get_boson_client() -> OpenAI:
 @lru_cache()
 def get_redis_client() -> "Redis":
     """Return a shared Redis client for caching audio and interrupts."""
-
-    if redis is None:
-        raise RuntimeError("redis package is required. Install 'redis' to enable caching.")
-
     return redis.Redis.from_url(REDIS_URL, decode_responses=True)

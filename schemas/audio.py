@@ -41,8 +41,11 @@ class InterruptRequest(BaseModel):
     def validate_superchat(cls, values: "InterruptRequest") -> "InterruptRequest":
         if values.kind == AudioKind.GENERAL:
             raise ValueError("kind must be superchat or gift for interrupts")
-        if values.kind == AudioKind.SUPERCHAT and not values.message:
-            raise ValueError("message is required when kind is superchat")
+        if values.kind == AudioKind.SUPERCHAT:
+            if not values.message:
+                raise ValueError("message is required when kind is superchat")
+            if not values.persona:
+                raise ValueError("persona is required when kind is superchat")
         return values
 
 
