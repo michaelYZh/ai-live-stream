@@ -1,0 +1,31 @@
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+
+from routers.talk import router as talk_router
+
+
+def create_app() -> FastAPI:
+    app = FastAPI(
+        title="Boson AI Hackathon Backend",
+        version="0.1.0",
+        description="Prototype backend.",
+    )
+
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=["*"],
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
+
+    app.include_router(talk_router)
+
+    @app.get("/healthz", tags=["health"])
+    async def healthcheck():
+        return {"status": "ok"}
+
+    return app
+
+
+app = create_app()
