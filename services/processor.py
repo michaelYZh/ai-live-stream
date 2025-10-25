@@ -3,6 +3,7 @@ from __future__ import annotations
 import base64
 import json
 import time
+import wave
 from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Dict, List, Optional
@@ -11,7 +12,9 @@ from config import (
     DEFAULT_GIFT_PROMPT,
     DEFAULT_SCRIPT,
     DEFAULT_STREAMER_PERSONA,
+    OUTPUT_AUDIO_DIR,
     PERSONA_REFERENCES,
+    SAVE_TTS_WAV,
     TTS_MODEL,
 )
 from services.audio import AudioKind, enqueue_audio_chunk
@@ -190,7 +193,7 @@ class StreamProcessor:
         return [HistoryRecord.from_json(p) for p in payloads]
 
 
-def generate_audio_with_persona(  # pragma: no cover - stub for integration
+def generate_audio_with_persona(
     persona: str,
     script: str,
     *,
@@ -255,7 +258,19 @@ def generate_audio_with_persona(  # pragma: no cover - stub for integration
     if not getattr(message, "audio", None) or not message.audio.data:
         raise RuntimeError("TTS response did not include audio data.")
 
-    return message.audio.data
+    audio_b64 = message.audio.data
+
+    if SAVE_TTS_WAV:
+        OUTPUT_AUDIO_DIR.mkdir(parents=True, exist_ok=True)
+        wav_path = OUTPUT_AUDIO_DIR / f"{persona_key}_{int(time.time() * 1000)}.wav"
+        audio_bytes = base64.b64decode(audio_b64)
+        with wave.open(str(wav_path), "wb") as wf:
+            wf.setnchannels(1)
+            wf.setsampwidth(2)
+            wf.setframerate(24000)
+            wf.writeframes(audio_bytes)
+
+    return audio_b64
 
 
 def generate_script_with_llm(  # pragma: no cover - stub for integration

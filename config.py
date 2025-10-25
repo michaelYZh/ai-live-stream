@@ -12,6 +12,7 @@ REDIS_URL = os.getenv("REDIS_URL", "redis://localhost:6379/0")
 ROOT_DIR = Path(__file__).resolve().parent
 ASSETS_DIR = ROOT_DIR / "assets"
 REFERENCE_AUDIO_DIR = ASSETS_DIR / "reference_audio"
+OUTPUT_AUDIO_DIR = ROOT_DIR / "output"
 
 TTS_MODEL = os.getenv("TTS_MODEL", "higgs-audio-generation-Hackathon")
 LLM_MODEL = os.getenv("LLM_MODEL", "Qwen3-32B-non-thinking-Hackathon")
@@ -20,6 +21,8 @@ DEFAULT_GIFT_PROMPT = os.getenv(
     "DEFAULT_GIFT_PROMPT",
     "A viewer just sent a gift during the livestream. React with excitement and keep the energy high!",
 )
+SAVE_TTS_WAV = os.getenv("SAVE_TTS_WAV", "false").lower() in {"1", "true", "yes"}
+PROCESSOR_LOOP_INTERVAL = float(os.getenv("PROCESSOR_LOOP_INTERVAL", "0.5"))
 
 PETER_GRIFFIN_REFERENCE_TRANSCRIPT = """
 I walked into the kitchen and sat down at the table. I looked with a Grimace at the questionable meal Lois
