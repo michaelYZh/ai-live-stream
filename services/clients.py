@@ -1,10 +1,9 @@
-import os
 from functools import lru_cache
 from typing import TYPE_CHECKING, Any
 
 from openai import OpenAI
 
-from config import BOSON_API_KEY, BOSON_BASE_URL
+from config import BOSON_API_KEY, BOSON_BASE_URL, REDIS_URL
 
 try:
     import redis
@@ -30,5 +29,4 @@ def get_redis_client() -> "Redis":
     if redis is None:
         raise RuntimeError("redis package is required. Install 'redis' to enable caching.")
 
-    url = os.getenv("REDIS_URL", "redis://localhost:6379/0")
-    return redis.Redis.from_url(url, decode_responses=True)
+    return redis.Redis.from_url(REDIS_URL, decode_responses=True)
