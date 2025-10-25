@@ -1,14 +1,8 @@
 from __future__ import annotations
 
 from fastapi import APIRouter, HTTPException, Query, status
-
-from schemas import (
-    AudioChunk,
-    AudioEnqueueRequest,
-    AudioFetchResponse,
-    InterruptRequest,
-    InterruptResponse,
-)
+from schemas.audio import (AudioChunk, AudioEnqueueRequest, AudioFetchResponse,
+                           InterruptRequest, InterruptResponse)
 from services.audio import AudioKind, enqueue_audio_chunk, fetch_audio_chunks
 from services.interrupts import InterruptResult, register_interrupt
 
@@ -22,7 +16,8 @@ async def pull_audio(kind: AudioKind = Query(default=AudioKind.GENERAL)) -> Audi
     try:
         chunks = fetch_audio_chunks(kind)
     except NotImplementedError as exc:
-        raise HTTPException(status_code=status.HTTP_501_NOT_IMPLEMENTED, detail=str(exc)) from exc
+        raise HTTPException(
+            status_code=status.HTTP_501_NOT_IMPLEMENTED, detail=str(exc)) from exc
 
     chunk_models = [
         AudioChunk(chunk_id=chunk_id, audio_base64=audio)
@@ -39,7 +34,8 @@ async def push_audio(request: AudioEnqueueRequest) -> dict:
     try:
         chunk_id = enqueue_audio_chunk(request.kind, request.audio_base64)
     except NotImplementedError as exc:
-        raise HTTPException(status_code=status.HTTP_501_NOT_IMPLEMENTED, detail=str(exc)) from exc
+        raise HTTPException(
+            status_code=status.HTTP_501_NOT_IMPLEMENTED, detail=str(exc)) from exc
 
     return {"status": "accepted", "chunk_id": chunk_id}
 
@@ -55,7 +51,8 @@ async def trigger_interrupt(request: InterruptRequest) -> InterruptResponse:
             message=request.message,
         )
     except NotImplementedError as exc:
-        raise HTTPException(status_code=status.HTTP_501_NOT_IMPLEMENTED, detail=str(exc)) from exc
+        raise HTTPException(
+            status_code=status.HTTP_501_NOT_IMPLEMENTED, detail=str(exc)) from exc
 
     return InterruptResponse(
         interrupt_id=result.interrupt_id,
