@@ -1,79 +1,51 @@
-from typing import Literal, Optional
+from __future__ import annotations
 
-from pydantic import BaseModel, Field
+from typing import List, Optional
+
+from pydantic import BaseModel, Field, model_validator
+
+from services.audio import AudioKind
 
 
-class TalkRequest(BaseModel):
-    script: Optional[str] = Field(
-        default=None,
-        description="Custom script to convert to speech.",
+class AudioChunk(BaseModel):
+    chunk_id: str = Field(description="Unique identifier for this audio chunk.")
+    audio_base64: str = Field(description="Base64-encoded audio data.")
+
+
+class AudioEnqueueRequest(BaseModel):
+    kind: AudioKind = Field(description="Category of audio being enqueued.")
+    audio_base64: str = Field(description="Base64-encoded audio chunk.")
+
+
+class AudioFetchResponse(BaseModel):
+    kind: AudioKind = Field(description="Category of audio that was fetched.")
+    chunks: List[AudioChunk] = Field(
+        default_factory=list,
+        description="Ordered collection of pending audio chunks for this category.",
     )
 
-    model_config = {
-        "json_schema_extra": {"examples": [{}]}
-    }
 
-
-class TalkResponse(BaseModel):
-    script: str = Field(description="Script used for speech synthesis.")
-    audio_base64: str = Field(description="Base64-encoded audio of the generated speech.")
-    mime_type: str = Field(default="audio/wav", description="MIME type of the generated audio.")
-
-
-class StreamerAudioRequest(BaseModel):
-    block_id: str = Field(..., description="Identifier of the script block currently requested.")
-    offset_seconds: float = Field(
-        0.0, ge=0.0, description="Playback offset into the block in seconds where streaming should resume."
-    )
-
-
-class InterruptionRequest(BaseModel):
-    type: Literal["superchat", "gift"] = Field(description="Kind of interruption being enqueued.")
+class InterruptRequest(BaseModel):
+    kind: AudioKind = Field(description="Type of interrupt to trigger (superchat or gift).")
     persona: Optional[str] = Field(
-        default=None, description="Persona voice to use for the interruption (for superchats)."
-    )
-    message: Optional[str] = Field(default=None, description="Text to be spoken for the interruption.")
-    gift_id: Optional[str] = Field(
-        default=None, description="Identifier of the gift, when type is gift."
-    )
-    urgency: Optional[int] = Field(
         default=None,
-        ge=0,
-        le=10,
-        description="Optional numeric urgency indicator to help prioritise interruptions.",
+        description="Persona voice identifier to use when synthesizing the interrupt.",
     )
-
-    model_config = {
-        "json_schema_extra": {
-            "examples": [
-                {
-                    "type": "superchat",
-                    "persona": "chinese_trump",
-                    "message": "Thanks for the dono!",
-                    "urgency": 5,
-                }
-            ]
-        }
-    }
-
-
-class InterruptionPlanResponse(BaseModel):
-    interruption_id: str = Field(description="Server-generated identifier for the interruption request.")
-    type: Literal["superchat", "gift"] = Field(description="Echo of the interruption type.")
-    priority: int = Field(description="Priority assigned by the backend. Lower means higher priority.")
-    estimated_duration_seconds: float = Field(
-        description="Estimated audio duration that will be streamed for this interruption."
-    )
-
-
-class InterruptionAckRequest(BaseModel):
-    played_duration_seconds: Optional[float] = Field(
+    message: Optional[str] = Field(
         default=None,
-        ge=0.0,
-        description="How much audio the client actually played before acknowledging.",
+        description="Text content for the interrupt (required for superchats).",
     )
 
+    @model_validator(mode="after")
+    def validate_superchat(cls, values: "InterruptRequest") -> "InterruptRequest":
+        if values.kind == AudioKind.GENERAL:
+            raise ValueError("kind must be superchat or gift for interrupts")
+        if values.kind == AudioKind.SUPERCHAT and not values.message:
+            raise ValueError("message is required when kind is superchat")
+        return values
 
-class InterruptionAckResponse(BaseModel):
-    interruption_id: str = Field(description="Identifier of the acknowledged interruption.")
-    status: Literal["acknowledged"] = Field(description="Current status for the interruption.")
+
+class InterruptResponse(BaseModel):
+    interrupt_id: str = Field(description="Identifier assigned to the registered interrupt.")
+    kind: AudioKind = Field(description="Kind of interrupt that was queued.")
+    status: str = Field(description="Current status of the interrupt request (e.g. queued).")

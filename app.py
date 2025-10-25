@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from routers.talk import router as talk_router
+from routers.audio import router as audio_router
 
 
 def create_app() -> FastAPI:
@@ -19,7 +19,7 @@ def create_app() -> FastAPI:
         allow_headers=["*"],
     )
 
-    app.include_router(talk_router)
+    app.include_router(audio_router)
 
     @app.get("/healthz", tags=["health"])
     async def healthcheck():

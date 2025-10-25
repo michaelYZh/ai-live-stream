@@ -1,1 +1,1 @@
-"""API routers for the Boson AI hackathon backend."""
+"""API routers for the AI live stream backend."""
