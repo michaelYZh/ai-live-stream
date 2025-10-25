@@ -6,7 +6,7 @@ from routers.talk import router as talk_router
 
 def create_app() -> FastAPI:
     app = FastAPI(
-        title="Boson AI Hackathon Backend",
+        title="AI Live Stream Backend",
         version="0.1.0",
         description="Prototype backend.",
     )
