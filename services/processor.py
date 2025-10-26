@@ -35,6 +35,7 @@ from services.interrupts import (
     InterruptRecord,
     mark_interrupt_processed,
     pop_next_interrupt,
+    requeue_interrupt,
 )
 
 logging.basicConfig(
@@ -88,7 +89,17 @@ class StreamProcessor:
                 interrupt.interrupt_id,
                 interrupt.kind.value,
             )
-            return self._handle_interrupt(interrupt)
+            try:
+                return self._handle_interrupt(interrupt)
+            except Exception:
+                logger.exception(
+                    "Error handling interrupt %s; requeueing.",
+                    interrupt.interrupt_id,
+                )
+                requeue_interrupt(interrupt)
+                return None
+        else:
+            logger.info("StreamProcessor cycle: no interrupts pending; processing script queue.")
 
         logger.debug("No interrupts pending; attempting to process script queue.")
         return self._handle_script_line()
@@ -538,4 +549,18 @@ def generate_script_with_llm(  # pragma: no cover - stub for integration
     remaining_script: str,
 ) -> str:
     """Generate a new script based on recent history, incoming context, and queued script."""
-    raise NotImplementedError("generate_script_with_llm must be implemented with LLM logic.")
+    return """
+Chat, what is happening right now.
+I just turned on my PC and it sounds like a jet engine.
+I'm not even running a game yet.
+Why is my fan spinning like it's trying to take off.
+Hold on, my mouse just froze, my monitor went black, and my mic is echoing back my own scream.
+Nah, this setup is haunted.
+I spent all night updating drivers for this?
+No way.
+I'm about to delete Windows out of pure emotion.
+Chat, if this crashes again, I'm running the stream from a toaster.
+Don't test me.
+We're staying live no matter what.
+Lock in.
+"""
