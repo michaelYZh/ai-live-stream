@@ -3,7 +3,6 @@ from __future__ import annotations
 import json
 from enum import StrEnum
 from typing import Dict, List
-from uuid import uuid4
 
 from services.clients import get_redis_client
 
@@ -15,6 +14,7 @@ class AudioKind(StrEnum):
 
 
 AUDIO_QUEUE_KEY = "stream:audio:queue"
+AUDIO_CHUNK_COUNTER_KEY = "stream:audio:next_chunk_id"
 
 
 def enqueue_audio_chunk(
@@ -25,7 +25,7 @@ def enqueue_audio_chunk(
     """Store an audio chunk into Redis for later playback and return its identifier."""
 
     client = get_redis_client()
-    chunk_id = uuid4().hex
+    chunk_id = str(client.incr(AUDIO_CHUNK_COUNTER_KEY))
     payload = json.dumps(
         {
             "chunk_id": chunk_id,
@@ -59,9 +59,13 @@ def fetch_audio_chunks() -> List[Dict[str, object]]:
         except ValueError:
             kind = AudioKind.GENERAL
 
+        chunk_id = data.get("chunk_id")
+        if chunk_id is None:
+            raise ValueError("Audio chunk payload missing chunk_id.")
+
         chunks.append(
             {
-                "chunk_id": data.get("chunk_id") or uuid4().hex,
+                "chunk_id": str(chunk_id),
                 "audio_base64": data.get("audio_base64", ""),
                 "kind": kind,
                 "transcript": transcript,
@@ -82,4 +86,4 @@ def reset_audio_queue() -> None:
     """Remove any pending audio chunks from the queue."""
 
     client = get_redis_client()
-    client.delete(AUDIO_QUEUE_KEY)
+    client.delete(AUDIO_QUEUE_KEY, AUDIO_CHUNK_COUNTER_KEY)
