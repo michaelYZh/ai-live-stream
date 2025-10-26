@@ -6,7 +6,7 @@ import time
 import wave
 from dataclasses import asdict, dataclass
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import Dict, Optional
 
 from config import (
     DEFAULT_GIFT_PROMPT,
@@ -40,6 +40,10 @@ class HistoryRecord:
         data = asdict(self)
         data["kind"] = self.kind.value
         return json.dumps(data)
+
+    def to_str(self) -> str:
+        """Render record text for LLM consumption."""
+        return f"[{self.persona}] {self.text}"
 
     @classmethod
     def from_json(cls, payload: str) -> "HistoryRecord":
@@ -75,8 +79,8 @@ class StreamProcessor:
         raise ValueError(f"Unsupported interrupt kind: {record.kind}")
 
     def _process_superchat(self, record: InterruptRecord) -> Dict[str, object]:
-        message = record.message or ""
-        persona = record.persona or DEFAULT_STREAMER_PERSONA
+        message = record.message
+        persona = record.persona
 
         audio_base64 = generate_audio_with_persona(
             persona,
@@ -96,7 +100,9 @@ class StreamProcessor:
         )
         self._append_history(history_record)
 
-        new_script = generate_script_with_llm(self._history_snapshot(), message)
+        history_snapshot = self._history_snapshot()
+        remaining_script = self._remaining_script_text()
+        new_script = generate_script_with_llm(history_snapshot, message, remaining_script)
         if new_script:
             self._replace_script(new_script, AudioKind.GENERAL)
 
@@ -111,7 +117,9 @@ class StreamProcessor:
 
     def _process_gift(self, record: InterruptRecord) -> Dict[str, object]:
         # Generate a follow-up script reacting to the gift.
-        new_script = generate_script_with_llm(self._history_snapshot(), DEFAULT_GIFT_PROMPT)
+        history_snapshot = self._history_snapshot()
+        remaining_script = self._remaining_script_text()
+        new_script = generate_script_with_llm(history_snapshot, DEFAULT_GIFT_PROMPT, remaining_script)
         if new_script:
             self._replace_script(new_script, AudioKind.GIFT)
 
@@ -187,10 +195,25 @@ class StreamProcessor:
     def _append_history(self, record: HistoryRecord) -> None:
         self.redis.rpush(HISTORY_KEY, record.to_json())
 
-    def _history_snapshot(self, limit: int = 50) -> List[HistoryRecord]:
+    def _history_snapshot(self, limit: int = 50) -> str:
         start = -limit if limit > 0 else 0
         payloads = self.redis.lrange(HISTORY_KEY, start, -1)
-        return [HistoryRecord.from_json(p) for p in payloads]
+        records = [
+            HistoryRecord.from_json(p.decode("utf-8") if isinstance(p, bytes) else p)
+            for p in payloads
+        ]
+        history_text = "".join(f"{record.to_str()}\n" for record in records)
+        return history_text
+
+    def _remaining_script_text(self) -> str:
+        payloads = self.redis.lrange(SCRIPT_QUEUE_KEY, 0, -1)
+        lines = []
+        for payload in payloads:
+            entry = json.loads(payload.decode("utf-8") if isinstance(payload, bytes) else payload)
+            line = entry.get("line", "").strip()
+            if line:
+                lines.append(line)
+        return "\n".join(lines)
 
 
 def generate_audio_with_persona(
@@ -274,8 +297,9 @@ def generate_audio_with_persona(
 
 
 def generate_script_with_llm(  # pragma: no cover - stub for integration
-    history: List[HistoryRecord],
+    history: str,
     input_text: str,
+    remaining_script: str,
 ) -> str:
-    """Generate a new script based on history and incoming context."""
+    """Generate a new script based on recent history, incoming context, and queued script."""
     raise NotImplementedError("generate_script_with_llm must be implemented with LLM logic.")
