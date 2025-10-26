@@ -229,6 +229,7 @@ class StreamProcessor:
                 raw_win_max_num_repeat=None,
                 valid_sampling=None,
                 line_index=self.line_index,
+                n=3,
             )
         )
         chunk_id = enqueue_audio_chunk(kind, audio_base64)
@@ -420,6 +421,7 @@ async def agenerate_audio_with_persona(
     reference_audio_path: Optional[Path] = None,
     valid_sampling: Optional[int] = None,
     line_index: Optional[int] = None,
+    n: Optional[int] = None,
 ) -> str:
     """Generate audio for the given persona and script."""
     persona_key = persona.lower().replace(" ", "_")
@@ -449,7 +451,8 @@ async def agenerate_audio_with_persona(
 
     system_prompt = f"Generate audio following instruction. Speak consistently, naturally, and continuously.\n<|scene_desc_start|>\n{persona_info['scene_desc']}\n<|scene_desc_end|>"
 
-    if valid_sampling is not None:
+    if valid_sampling is not None or n is not None:
+        n = valid_sampling or n
         futures = [
             agenerate_audio_with_reference(
                 reference_path,
@@ -463,16 +466,21 @@ async def agenerate_audio_with_persona(
                 ras_win_len,
                 raw_win_max_num_repeat,
             )
-            for _ in range(valid_sampling)
+            for _ in range(n)
         ]
         audio_b64s = await asyncio.gather(*futures)
-        scores = [
-            aget_valid_score(audio_b64s[i], script) for i in range(valid_sampling)
-        ]
-        scores = await asyncio.gather(*scores)
-        logger.info(f"{scores = }")
-        best_idx = np.argmax(scores)
-        audio_b64 = audio_b64s[best_idx]
+        if valid_sampling is not None:
+            scores = [
+                aget_valid_score(audio_b64s[i], script) for i in range(n)
+            ]
+            scores = await asyncio.gather(*scores)
+            logger.info(f"{scores = }")
+            best_idx = np.argmax(scores)
+            audio_b64 = audio_b64s[best_idx]
+        else:
+            audio_b64 = audio_b64s[0]
+            for i in range(1, n):
+                save_audio_with_line_index(audio_b64s[i], persona_key, line_index)
     else:
         audio_b64 = await agenerate_audio_with_reference(
             reference_path,
@@ -487,6 +495,12 @@ async def agenerate_audio_with_persona(
             raw_win_max_num_repeat,
         )
 
+    save_audio_with_line_index(audio_b64, persona_key, line_index)
+
+    return audio_b64
+
+
+def save_audio_with_line_index(audio_b64, persona_key: str, line_index: Optional[int] = None):
     if SAVE_TTS_WAV:
         OUTPUT_AUDIO_DIR.mkdir(parents=True, exist_ok=True)
         if line_index is None:
@@ -506,8 +520,6 @@ async def agenerate_audio_with_persona(
             wf.setframerate(24000)
             wf.writeframes(audio_bytes)
         logger.info(f"Saved audio for line {line_index} to {wav_path}.")
-
-    return audio_b64
 
 
 def calculate_wer(ref: str, hyp: str):
