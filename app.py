@@ -27,6 +27,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     """Manage application startup and shutdown hooks."""
 
     processor = StreamProcessor()
+    processor.reset_state()
     stop_event = asyncio.Event()
     worker_task: Optional[asyncio.Task[None]] = None
 

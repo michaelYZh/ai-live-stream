@@ -80,6 +80,13 @@ class StreamProcessor:
     def __init__(self) -> None:
         self.redis = get_redis_client()
 
+    def reset_state(self) -> None:
+        """Clear existing script/history entries and load defaults."""
+        logger.info("Resetting stream processor state.")
+        self.redis.delete(HISTORY_KEY)
+        self._replace_script(DEFAULT_SCRIPT, AudioKind.GENERAL)
+        logger.info("Stream processor state reset complete.")
+
     def process_once(self) -> Optional[Dict[str, object]]:
         """Process the next unit of work (interrupt or script line)."""
 
