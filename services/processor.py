@@ -1,13 +1,24 @@
 from __future__ import annotations
 
+import asyncio
 import base64
 import json
+import logging
 import time
 import wave
 import logging
 from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Dict, Optional
+
+import numpy as np
+from tenacity import (
+    before_sleep_log,
+    retry,
+    retry_if_exception_type,
+    stop_after_attempt,
+    wait_exponential,
+)
 
 from config import (
     DEFAULT_GIFT_PROMPT,
@@ -26,6 +37,9 @@ from services.interrupts import (
     pop_next_interrupt,
 )
 
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
+)
 logger = logging.getLogger(__name__)
 
 @dataclass
@@ -96,13 +110,17 @@ class StreamProcessor:
             persona or DEFAULT_STREAMER_PERSONA,
         )
 
-        audio_base64 = generate_audio_with_persona(
-            persona,
-            message,
-            max_completion_tokens=1024,
-            temperature=1.1,
-            ras_win_len=100,
-            raw_win_max_num_repeat=20,
+        audio_base64 = asyncio.run(
+            agenerate_audio_with_persona(
+                persona,
+                message,
+                max_completion_tokens=1024,
+                temperature=1.1,
+                top_p=0.95,
+                top_k=50,
+                ras_win_len=None,
+                raw_win_max_num_repeat=None,
+            )
         )
         chunk_id = enqueue_audio_chunk(AudioKind.SUPERCHAT, audio_base64)
 
@@ -172,16 +190,26 @@ class StreamProcessor:
         if not line:
             return None
 
+        speaker = line.split("[")[1].split("]")[0].strip()
+        line = line.split("]")[1].strip()
+
+        logger.info(f"[{entry.get('persona')}][{speaker}] {line}")
+
         kind = AudioKind(entry.get("kind", AudioKind.GENERAL.value))
         persona = entry.get("persona") or DEFAULT_STREAMER_PERSONA
 
-        audio_base64 = generate_audio_with_persona(
-            persona,
-            line,
-            max_completion_tokens=1024,
-            temperature=1.1,
-            ras_win_len=100,
-            raw_win_max_num_repeat=20,
+        audio_base64 = asyncio.run(
+            agenerate_audio_with_persona(
+                persona,
+                line,
+                max_completion_tokens=1024,
+                temperature=1.1,
+                top_p=0.95,
+                top_k=50,
+                ras_win_len=None,
+                raw_win_max_num_repeat=None,
+                valid_sampling=None,
+            )
         )
         chunk_id = enqueue_audio_chunk(kind, audio_base64)
 
@@ -266,16 +294,107 @@ class StreamProcessor:
         return "\n".join(lines)
 
 
-def generate_audio_with_persona(
+@retry(
+    stop=stop_after_attempt(10000),
+    wait=wait_exponential(multiplier=1, min=1, max=10),
+    retry=retry_if_exception_type((Exception,)),
+    before_sleep=before_sleep_log(logger, logging.WARNING),
+    reraise=True,
+)
+def generate_audio_with_reference(
+    reference_audio_path,
+    reference_transcript,
+    system_prompt,
+    user_prompt,
+    max_completion_tokens: int = 1024,
+    temperature: float = 1.0,
+    top_p: float = 0.95,
+    top_k: int = 50,
+    ras_win_len: int = None,
+    raw_win_max_num_repeat: int = None,
+):
+    reference_audio_path = Path(reference_audio_path)
+    reference_transcript = reference_transcript.strip()
+
+    client = get_boson_client()
+    reference_b64 = base64.b64encode(reference_audio_path.read_bytes()).decode("utf-8")
+
+    response = client.chat.completions.create(
+        model=TTS_MODEL,
+        messages=[
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": reference_transcript},
+            {
+                "role": "assistant",
+                "content": [
+                    {
+                        "type": "input_audio",
+                        "input_audio": {
+                            "data": reference_b64,
+                            "format": reference_audio_path.suffix.lstrip("."),
+                        },
+                    }
+                ],
+            },
+            {"role": "user", "content": user_prompt},
+        ],
+        modalities=["text", "audio"],
+        max_completion_tokens=max_completion_tokens,
+        temperature=temperature,
+        top_p=top_p,
+        stream=False,
+        stop=["<|eot_id|>", "<|end_of_text|>", "<|audio_eos|>"],
+        extra_body={
+            "top_k": top_k,
+            "ras_win_len": ras_win_len,
+            "raw_win_max_num_repeat": raw_win_max_num_repeat,
+        },
+    )
+
+    audio_b64 = response.choices[0].message.audio.data
+    return audio_b64
+
+
+async def agenerate_audio_with_reference(
+    reference_audio_path,
+    reference_transcript,
+    system_prompt,
+    user_prompt,
+    max_completion_tokens: int = 1024,
+    temperature: float = 1.0,
+    top_p: float = 0.95,
+    top_k: int = 50,
+    ras_win_len: int = None,
+    raw_win_max_num_repeat: int = None,
+):
+    return await asyncio.to_thread(
+        generate_audio_with_reference,
+        reference_audio_path,
+        reference_transcript,
+        system_prompt,
+        user_prompt,
+        max_completion_tokens,
+        temperature,
+        top_p,
+        top_k,
+        ras_win_len,
+        raw_win_max_num_repeat,
+    )
+
+
+async def agenerate_audio_with_persona(
     persona: str,
     script: str,
     *,
     max_completion_tokens: int,
     temperature: float,
+    top_p: float,
+    top_k: int,
     ras_win_len: int,
     raw_win_max_num_repeat: int,
     reference_transcript: Optional[str] = None,
     reference_audio_path: Optional[Path] = None,
+    valid_sampling: Optional[int] = None,
 ) -> str:
     """Generate audio for the given persona and script."""
     persona_key = persona.lower().replace(" ", "_")
@@ -288,50 +407,53 @@ def generate_audio_with_persona(
     if persona_info is None:
         raise ValueError(f"No persona reference configured for '{persona}'.")
 
-    reference_path = Path(
-        reference_audio_path or persona_info["path"]
-    )
-    transcript = (reference_transcript or persona_info["transcript"]).strip()
+    reference_path = Path(reference_audio_path or persona_info["path"])
+    reference_transcript = (reference_transcript or persona_info["transcript"]).strip()
 
     if not reference_path.exists():
-        raise FileNotFoundError(f"Reference audio not found for persona '{persona_key}': {reference_path}")
+        raise FileNotFoundError(
+            f"Reference audio not found for persona '{persona_key}': {reference_path}"
+        )
 
-    client = get_boson_client()
-    reference_b64 = base64.b64encode(reference_path.read_bytes()).decode("utf-8")
+    system_prompt = f"Generate audio following instruction. Speak consistently, naturally, and continuously.\n<|scene_desc_start|>\n{persona_info['scene_desc']}\n<|scene_desc_end|>"
 
-    response = client.chat.completions.create(
-        model=TTS_MODEL,
-        messages=[
-            {"role": "user", "content": transcript},
-            {
-                "role": "assistant",
-                "content": [
-                    {
-                        "type": "input_audio",
-                        "input_audio": {"data": reference_b64, "format": "wav"},
-                    }
-                ],
-            },
-            {"role": "user", "content": script},
-        ],
-        modalities=["text", "audio"],
-        max_completion_tokens=max_completion_tokens,
-        temperature=temperature,
-        top_p=0.95,
-        stream=False,
-        stop=["<|eot_id|>", "<|end_of_text|>", "<|audio_eos|>"],
-        extra_body={
-            "top_k": 50,
-            "ras_win_len": ras_win_len,
-            "raw_win_max_num_repeat": raw_win_max_num_repeat,
-        },
-    )
-
-    message = response.choices[0].message
-    if not getattr(message, "audio", None) or not message.audio.data:
-        raise RuntimeError("TTS response did not include audio data.")
-
-    audio_b64 = message.audio.data
+    if valid_sampling is not None:
+        futures = [
+            agenerate_audio_with_reference(
+                reference_path,
+                reference_transcript,
+                system_prompt,
+                script,
+                max_completion_tokens,
+                temperature,
+                top_p,
+                top_k,
+                ras_win_len,
+                raw_win_max_num_repeat,
+            )
+            for _ in range(valid_sampling)
+        ]
+        audio_b64s = await asyncio.gather(*futures)
+        scores = [
+            aget_valid_score(audio_b64s[i], script) for i in range(valid_sampling)
+        ]
+        scores = await asyncio.gather(*scores)
+        logger.info(f"{scores = }")
+        best_idx = np.argmax(scores)
+        audio_b64 = audio_b64s[best_idx]
+    else:
+        audio_b64 = await agenerate_audio_with_reference(
+            reference_path,
+            reference_transcript,
+            system_prompt,
+            script,
+            max_completion_tokens,
+            temperature,
+            top_p,
+            top_k,
+            ras_win_len,
+            raw_win_max_num_repeat,
+        )
 
     if SAVE_TTS_WAV:
         OUTPUT_AUDIO_DIR.mkdir(parents=True, exist_ok=True)
@@ -344,6 +466,70 @@ def generate_audio_with_persona(
             wf.writeframes(audio_bytes)
 
     return audio_b64
+
+
+def calculate_wer(ref: str, hyp: str):
+    # simple normalization
+    import re
+
+    def norm(s):
+        return re.sub(r"\s+", " ", re.sub(r"[^\w\s]", "", s.lower())).strip()
+
+    r = norm(ref).split()
+    h = norm(hyp).split()
+    # DP edit distance with backtrace counts
+    m, n = len(r), len(h)
+    dp = [[(0, 0, 0, 0) for _ in range(n + 1)] for __ in range(m + 1)]  # (cost,S,D,I)
+    for i in range(1, m + 1):
+        dp[i][0] = (i, 0, i, 0)
+    for j in range(1, n + 1):
+        dp[0][j] = (j, 0, 0, j)
+    for i in range(1, m + 1):
+        for j in range(1, n + 1):
+            if r[i - 1] == h[j - 1]:
+                dp[i][j] = dp[i - 1][j - 1]
+            else:
+                ins = dp[i][j - 1]
+                ins = (ins[0] + 1, ins[1], ins[2], ins[3] + 1)
+                dele = dp[i - 1][j]
+                dele = (dele[0] + 1, dele[1], dele[2] + 1, dele[3])
+                sub = dp[i - 1][j - 1]
+                sub = (sub[0] + 1, sub[1] + 1, sub[2], sub[3])
+                dp[i][j] = min(ins, dele, sub, key=lambda x: x[0])
+    cost, S, D, I = dp[m][n]
+    wer = cost / max(1, m)
+    return {"WER": wer, "S": S, "D": D, "I": I, "N": m}
+
+
+async def aget_valid_score(audio_b64, reference_transcript: str) -> float:
+    # TODO: make it aysnc
+    if audio_b64 is None:
+        raise RuntimeError("Audio data is None.")
+
+    client = get_boson_client()
+    response = client.chat.completions.create(
+        model="higgs-audio-understanding-Hackathon",
+        messages=[
+            {"role": "system", "content": "Transcribe this audio."},
+            {
+                "role": "user",
+                "content": [
+                    {
+                        "type": "input_audio",
+                        "input_audio": {
+                            "data": audio_b64,
+                            "format": "wav",
+                        },
+                    },
+                ],
+            },
+        ],
+        max_completion_tokens=1024,
+        temperature=0.0,
+    )
+    transcription = response.choices[0].message.content
+    wer_score = calculate_wer(transcription, reference_transcript)["WER"]
+    return 1 - wer_score
 
 
 def generate_script_with_llm(  # pragma: no cover - stub for integration

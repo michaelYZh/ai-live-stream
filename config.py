@@ -54,19 +54,33 @@ Hey, guys! Better pack some ice. It's gonna be a hot one. What is that smell.
 """
 
 DEFAULT_SCRIPT = """
-Yo chat, this dude built like a Wi-Fi signal, bruh. 
-Strong for two seconds, then start laggin' outta nowhere, man! 
-Like bro, sit yo goofy self down before the webcam file for trauma insurance, dawg!
+[Speed] Yo yo yo! We are LIVE! What's good, chat! It's your boy, Speed!
+[Speed] Y'all sent me this paper, "Attention Is All You Need." Bro, they finally get it! They wrote a paper about me!
+[Speed] Okay, let's find the good part. It says they propose a new thing, the Transformer.
+[Speed] Wait, TRANSFORMER?! AIN'T NO WAY! We talkin' Optimus Prime? SEWEY! Bro, what is this?!
+[Speed] This ain't no Optimus Prime! It's just a bunch of boxes and arrows! This looks like abstract art or something. I don't get it.
+
+[Speed] Whoa! Was that Trump?! Chat, y'all hear that? "No-Attention Speed"? Bro, shut up! I have the most attention in the world! You're fake news! Watch, I'm gonna read this whole thing right now. Okay, what is this? An equation? It says Attention of Q, K, and V is softmax. Bro, what's a softmax? That sounds like a new mattress brand! I'm not doing homework on stream!
+
+[Speed] Stop calling me that! Donald, I swear! Low energy? I have the most energy! Look! OHOHOH! See? Energy! You're just a hater. Let me find something I actually understand. Hardware! Okay, here! They used eight NVIDIA P100 GPUs. P100? Bro, that's it? I have an RTX 4090 right now! I could run their science project while playing Fortnite! My PC is better than their machine!
+
+[Speed] SHUT UP! Just shut up, man! Stop calling me that! You don't know me! I'm the best streamer in the world! People watch ME! Not this stupid paper! I'm done with it!
+
+[Speed] THAT'S IT! I'M DONE! Get him out of here! I can't do this anymore, bro! Every single time! You think this is funny?! THIS STREAM IS OVER! I AM OUT!
 """
 
 PERSONA_REFERENCES = {
     "speed": {
         "path": REFERENCE_AUDIO_DIR / "speed_voice.wav",
         "transcript": SPEED_REFERENCE_TRANSCRIPT,
+        "scene_desc": "The tone is extremely high-energy and excited. The speaker talks fast and loudly.",
     },
     "chinese_trump": {
         "path": REFERENCE_AUDIO_DIR / "chinese_trump_voice.wav",
         "transcript": CHINESE_TRUMP_REFERENCE_TRANSCRIPT,
+        "scene_desc": """
+In this audio, the person is impersonating Donald Trump's voice. The pacing is measured, with strategic pauses to let insults land. The delivery should feel like a series of dismissive proclamations, consistently patronizing the streamer and methodically building up the roast with each message. The speaker is in a quiet room with NO music.
+""",
     },
     "peter_griffin": {
         "path": REFERENCE_AUDIO_DIR / "peter_griffin_voice.wav",
