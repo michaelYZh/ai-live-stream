@@ -24,6 +24,7 @@ from config import (
     DEFAULT_GIFT_PROMPT,
     DEFAULT_SCRIPT,
     DEFAULT_STREAMER_PERSONA,
+    LLM_MODEL,
     OUTPUT_AUDIO_DIR,
     PERSONA_REFERENCES,
     SAVE_TTS_WAV,
@@ -538,4 +539,15 @@ def generate_script_with_llm(  # pragma: no cover - stub for integration
     remaining_script: str,
 ) -> str:
     """Generate a new script based on recent history, incoming context, and queued script."""
-    raise NotImplementedError("generate_script_with_llm must be implemented with LLM logic.")
+    client = get_boson_client()
+    response = client.chat.completions.create(
+        model=LLM_MODEL,
+        messages=[
+            {"role": "system", "content": "TODO"},
+            {"role": "user", "content": "TOOD"}
+        ],
+        stream=False,
+        max_tokens=4096,
+        temperature=0.7,
+    )
+    return response.choices[0].message.content
