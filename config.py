@@ -91,3 +91,5 @@ In this audio, the person is impersonating Donald Trump's voice. The pacing is m
         "transcript": SPONGEBOB_REFERENCE_TRANSCRIPT,
     },
 }
+
+MODIFY_SCRIPT_PROMPT_TEMPLATE = """TODO"""

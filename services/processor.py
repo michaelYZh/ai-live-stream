@@ -24,6 +24,7 @@ from config import (
     DEFAULT_GIFT_PROMPT,
     DEFAULT_SCRIPT,
     DEFAULT_STREAMER_PERSONA,
+    LLM_MODEL,
     OUTPUT_AUDIO_DIR,
     PERSONA_REFERENCES,
     SAVE_TTS_WAV,
@@ -549,18 +550,15 @@ def generate_script_with_llm(  # pragma: no cover - stub for integration
     remaining_script: str,
 ) -> str:
     """Generate a new script based on recent history, incoming context, and queued script."""
-    return """
-Chat, what is happening right now.
-I just turned on my PC and it sounds like a jet engine.
-I'm not even running a game yet.
-Why is my fan spinning like it's trying to take off.
-Hold on, my mouse just froze, my monitor went black, and my mic is echoing back my own scream.
-Nah, this setup is haunted.
-I spent all night updating drivers for this?
-No way.
-I'm about to delete Windows out of pure emotion.
-Chat, if this crashes again, I'm running the stream from a toaster.
-Don't test me.
-We're staying live no matter what.
-Lock in.
-"""
+    client = get_boson_client()
+    response = client.chat.completions.create(
+        model=LLM_MODEL,
+        messages=[
+            {"role": "system", "content": "TODO"},
+            {"role": "user", "content": "TOOD"}
+        ],
+        stream=False,
+        max_tokens=4096,
+        temperature=0.7,
+    )
+    return response.choices[0].message.content
