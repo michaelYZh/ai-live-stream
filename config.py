@@ -92,4 +92,77 @@ In this audio, the person is impersonating Donald Trump's voice. The pacing is m
     },
 }
 
-MODIFY_SCRIPT_PROMPT_TEMPLATE = """TODO"""
+MODIFY_SCRIPT_PROMPT_TEMPLATE = """
+<core_task>
+You will be given the Speech History of a livestream transcript and a New Superchat Message formatted as [Superchat_name] message_text. Write the next segment of the livestream transcript where the streamer explicitly calls out and addresses the Superchat_name and reacts to the content and tone of their message in-character in at most 2 sentences. If the sender is a well-known figure (e.g., Trump, Elon, Kanye), the response should acknowledge their recognizable traits, personality, or public history in a natural and fitting way. After those 2 sentences, smoothly transition back into the topic described in remaining_lines and continue it in the same direction. Your output must match the tone, pacing, personality, and energy shown in speech_history, and the length of your continuation should be similar to the length of remaining_lines. The result should feel like a natural continuation, not a new scene.
+</core_task>
+
+<persona streamer={streamer}>
+{stramer_persona}
+</persona>
+
+<transcript_guide>
+Speakable: Every line must sound natural when spoken. This is for a Text-to-Speech (TTS) model.
+Simple Punctuation: Use ellipses (...) for pauses, but never place two sets of ellipses near each other. Avoid complex punctuation.
+No Symbols for Words: When encountering formulas or symbols (like =), write them out phonetically. For example, write "is" or "equals" instead of =.
+No Stage Directions: Do not include parenthetical actions like (slams desk) or (laughs). The emotion should be conveyed through the dialogue itself.
+Correct Formatting: All lines must start with either [Speed] or [Superchat].
+Logical Flow: Ensure Speed's reaction is a direct and natural response to the superchat. The dialogue should build on the central joke or roast.
+</transcript_guide>
+
+
+<input_format>
+You will receive:
+- speech_history: the spoken lines of the streamer
+- remaining_lines: the remaining lines of the script to be streamed
+- new_superchat: the new superchat message sent to the streamer
+</input_format>
+
+<output_format>
+Your task is to provide the next logical lines of the script as the response.
+Each line should be prefixed with [{streamer}] 
+</output_format>
+
+<example>
+    <speech_history>
+[Speed] Yo yo yo! We are LIVE! What's good, chat! It's your boy, Speed!
+[Speed] Y'all sent me this paper, "Attention Is All You Need." Bro, they finally get it! They wrote a paper about me!
+[Speed] Okay, let's find the good part. It says they propose a new thing, the Transformer.
+[Speed] Wait, TRANSFORMER?! AIN'T NO WAY! We talkin' Optimus Prime? SEWEY! Bro, what is this?!
+[Speed] This ain't no Optimus Prime! It's just a bunch of boxes and arrows! This looks like abstract art or something. I don't get it.
+    </speech_history>
+    <remaining_lines>
+[Speed] Whoa! Was that Trump?! Chat, y'all hear that? "No-Attention Speed"? Bro, shut up! I have the most attention in the world! You're fake news! Watch, I'm gonna read this whole thing right now. Okay, what is this? An equation? It says Attention of Q, K, and V is softmax. Bro, what's a softmax? That sounds like a new mattress brand! I'm not doing homework on stream!
+
+[Speed] Stop calling me that! Donald, I swear! Low energy? I have the most energy! Look! OHOHOH! See? Energy! You're just a hater. Let me find something I actually understand. Hardware! Okay, here! They used eight NVIDIA P100 GPUs. P100? Bro, that's it? I have an RTX 4090 right now! I could run their science project while playing Fortnite! My PC is better than their machine!
+
+[Speed] SHUT UP! Just shut up, man! Stop calling me that! You don't know me! I'm the best streamer in the world! People watch ME! Not this stupid paper! I'm done with it!
+
+[Speed] THAT'S IT! I'M DONE! Get him out of here! I can't do this anymore, bro! Every single time! You think this is funny?! THIS STREAM IS OVER! I AM OUT!
+    </remaining_lines>
+    <new_superchat>
+[Trump] Wrong! It's a tremendous architecture, the best. But you can't see it because you have no attention span. Sad! They shouldn't call you iShowSpeed, they should call you No-Attention Speed.
+    </new_superchat>
+    
+    <example_output>
+[Speed] Whoa! Was that Trump?! Chat, y'all hear that? "No-Attention Speed"?
+[Speed] Bro, shut up! I have the most attention in the world! You're fake news!
+[Speed] Watch, I'm gonna read this whole thing right now.
+    </example_output>
+</example>
+
+<input>
+    <speech_history>
+{speech_history}
+    </speech_history>
+    <remaining_lines>
+{remaining_lines}
+    </remaining_lines>
+    <new_superchat>
+[{superchat_sender}]{superchat_message}
+    </new_superchat>
+</input>
+
+Please proceed to write the next 5 lines of the script.
+"""
+LLM_SYSTEM_PROMPT = "You are an expert scriptwriter specializing in creating authentic, engaging, and voice-ready livestream transcripts. Your task is to continue an ongoing script based on new user comments (superchats)."
