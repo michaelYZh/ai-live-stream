@@ -149,7 +149,14 @@ class StreamProcessor:
                 raw_win_max_num_repeat=None,
             )
         )
-        chunk_id = enqueue_audio_chunk(AudioKind.SUPERCHAT, audio_base64)
+        if message is None:
+            raise ValueError("Superchat interrupt missing message transcript.")
+
+        chunk_id = enqueue_audio_chunk(
+            AudioKind.SUPERCHAT,
+            audio_base64,
+            transcript=message,
+        )
 
         logger.info("Superchat audio chunk ready: %s", chunk_id)
 
@@ -238,7 +245,11 @@ class StreamProcessor:
                 n=5,
             )
         )
-        chunk_id = enqueue_audio_chunk(kind, audio_base64)
+        chunk_id = enqueue_audio_chunk(
+            kind,
+            audio_base64,
+            transcript=line,
+        )
 
         history_record = HistoryRecord(
             persona=persona,

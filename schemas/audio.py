@@ -9,10 +9,18 @@ from services.audio import AudioKind
 class AudioEnqueueRequest(BaseModel):
     kind: AudioKind = Field(description="Category of audio being enqueued.")
     audio_base64: str = Field(description="Base64-encoded audio chunk.")
+    transcript: str = Field(description="Text transcript associated with the audio chunk.")
+
+
+class AudioChunk(BaseModel):
+    chunk_id: str = Field(description="Identifier of the audio chunk.")
+    kind: AudioKind = Field(description="Category of the audio chunk.")
+    audio_base64: str = Field(description="Base64-encoded audio data.")
+    transcript: str = Field(description="Transcript associated with the audio chunk.")
 
 
 class AudioFetchResponse(BaseModel):
-    chunks: List[str] = Field(
+    chunks: List[AudioChunk] = Field(
         default_factory=list,
         description="Ordered collection of pending audio chunks ready for playback.",
     )

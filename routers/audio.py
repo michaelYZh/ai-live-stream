@@ -4,7 +4,12 @@ import logging
 
 from fastapi import APIRouter, status
 
-from schemas import AudioEnqueueRequest, AudioFetchResponse, InterruptRequest, InterruptResponse
+from schemas import (
+    AudioEnqueueRequest,
+    AudioFetchResponse,
+    InterruptRequest,
+    InterruptResponse,
+)
 from services.audio import count_audio_chunks, enqueue_audio_chunk, fetch_audio_chunks
 from services.interrupts import InterruptResult, register_interrupt
 
@@ -16,10 +21,10 @@ logger = logging.getLogger(__name__)
 async def pull_audio() -> AudioFetchResponse:
     """Return queued audio chunks in playback order."""
 
-    chunks = fetch_audio_chunks()
-    logger.info("Fetched %d audio chunks from queue.", len(chunks))
+    raw_chunks = fetch_audio_chunks()
+    logger.info("Fetched %d audio chunks from queue.", len(raw_chunks))
 
-    return AudioFetchResponse(chunks=chunks)
+    return AudioFetchResponse(chunks=raw_chunks)
 
 
 @router.get("/count")
@@ -35,7 +40,11 @@ async def audio_queue_count() -> dict:
 async def push_audio(request: AudioEnqueueRequest) -> dict:
     """Accept a new audio chunk and enqueue it for later playback."""
 
-    chunk_id = enqueue_audio_chunk(request.kind, request.audio_base64)
+    chunk_id = enqueue_audio_chunk(
+        request.kind,
+        request.audio_base64,
+        transcript=request.transcript,
+    )
     logger.info("Received audio chunk %s via push for kind %s.", chunk_id, request.kind.value)
 
     return {"status": "accepted", "chunk_id": chunk_id}

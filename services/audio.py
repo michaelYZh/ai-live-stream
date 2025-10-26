@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import json
 from enum import StrEnum
-from typing import List
+from typing import Dict, List
 from uuid import uuid4
 
 from services.clients import get_redis_client
@@ -17,30 +17,56 @@ class AudioKind(StrEnum):
 AUDIO_QUEUE_KEY = "stream:audio:queue"
 
 
-def enqueue_audio_chunk(kind: AudioKind, audio_base64: str) -> str:
+def enqueue_audio_chunk(
+    kind: AudioKind,
+    audio_base64: str,
+    transcript: str,
+) -> str:
     """Store an audio chunk into Redis for later playback and return its identifier."""
 
     client = get_redis_client()
     chunk_id = uuid4().hex
     payload = json.dumps(
-        {"chunk_id": chunk_id, "audio_base64": audio_base64, "kind": kind.value}
+        {
+            "chunk_id": chunk_id,
+            "audio_base64": audio_base64,
+            "kind": kind.value,
+            "transcript": transcript,
+        }
     )
     client.rpush(AUDIO_QUEUE_KEY, payload)
     return chunk_id
 
 
-def fetch_audio_chunks() -> List[str]:
+def fetch_audio_chunks() -> List[Dict[str, object]]:
     """Fetch and remove pending audio chunks in chronological order."""
 
     client = get_redis_client()
-    chunks: List[str] = []
+    chunks: List[Dict[str, object]] = []
 
     while True:
         payload = client.lpop(AUDIO_QUEUE_KEY)
         if payload is None:
             break
+
         data = json.loads(payload)
-        chunks.append(data["audio_base64"])
+        transcript = data.get("transcript")
+        if transcript is None:
+            raise ValueError("Audio chunk payload missing transcript.")
+
+        try:
+            kind = AudioKind(data.get("kind", AudioKind.GENERAL.value))
+        except ValueError:
+            kind = AudioKind.GENERAL
+
+        chunks.append(
+            {
+                "chunk_id": data.get("chunk_id") or uuid4().hex,
+                "audio_base64": data.get("audio_base64", ""),
+                "kind": kind,
+                "transcript": transcript,
+            }
+        )
 
     return chunks
 
