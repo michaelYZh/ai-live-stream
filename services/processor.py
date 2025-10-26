@@ -368,6 +368,7 @@ def generate_audio_with_reference(
             "ras_win_len": ras_win_len,
             "raw_win_max_num_repeat": raw_win_max_num_repeat,
         },
+        timeout=15,
     )
 
     audio_b64 = response.choices[0].message.audio.data
