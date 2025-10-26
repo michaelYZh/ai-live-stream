@@ -43,3 +43,10 @@ def fetch_audio_chunks() -> List[str]:
         chunks.append(data["audio_base64"])
 
     return chunks
+
+
+def count_audio_chunks() -> int:
+    """Return the number of pending audio chunks without modifying the queue."""
+
+    client = get_redis_client()
+    return client.llen(AUDIO_QUEUE_KEY)
