@@ -64,6 +64,8 @@ def register_interrupt(
 
     client.hset(_INTERRUPT_DATA_KEY, interrupt_id, json.dumps(record))
     client.rpush(_INTERRUPT_QUEUE_KEY, interrupt_id)
+    queue_length = client.llen(_INTERRUPT_QUEUE_KEY)
+    logger.info("Interrupt queue length after enqueue: %d", queue_length)
 
     logger.info(
         "Queued interrupt %s of kind %s for persona=%s.",
@@ -79,6 +81,8 @@ def pop_next_interrupt() -> Optional[InterruptRecord]:
     """Pop the next pending interrupt from the queue for processing."""
 
     client = get_redis_client()
+    queue_length = client.llen(_INTERRUPT_QUEUE_KEY)
+    logger.info("Interrupt queue length before pop: %d", queue_length)
     interrupt_id = client.lpop(_INTERRUPT_QUEUE_KEY)
     if interrupt_id is None:
         logger.debug("No pending interrupts found in queue.")
@@ -127,3 +131,22 @@ def mark_interrupt_processed(interrupt_id: str, *, status: str = "processed") ->
     data["completed_at"] = time.time()
     client.hset(_INTERRUPT_DATA_KEY, interrupt_id, json.dumps(data))
     logger.info("Marked interrupt %s as %s.", interrupt_id, status)
+
+
+def requeue_interrupt(record: InterruptRecord) -> None:
+    """Place an interrupt back onto the queue for retry."""
+
+    client = get_redis_client()
+
+    payload = {
+        "interrupt_id": record.interrupt_id,
+        "kind": record.kind.value,
+        "persona": record.persona,
+        "message": record.message,
+        "status": record.status,
+        "created_at": record.created_at,
+        "retry_at": time.time(),
+    }
+    client.hset(_INTERRUPT_DATA_KEY, record.interrupt_id, json.dumps(payload))
+    client.rpush(_INTERRUPT_QUEUE_KEY, record.interrupt_id)
+    logger.info("Requeued interrupt %s onto queue.", record.interrupt_id)

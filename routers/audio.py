@@ -5,7 +5,7 @@ import logging
 from fastapi import APIRouter, status
 
 from schemas import AudioEnqueueRequest, AudioFetchResponse, InterruptRequest, InterruptResponse
-from services.audio import AudioKind, enqueue_audio_chunk, fetch_audio_chunks
+from services.audio import enqueue_audio_chunk, fetch_audio_chunks
 from services.interrupts import InterruptResult, register_interrupt
 
 router = APIRouter(prefix="/audio", tags=["audio"])

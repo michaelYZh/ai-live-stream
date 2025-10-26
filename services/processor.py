@@ -38,6 +38,7 @@ from services.interrupts import (
     InterruptRecord,
     mark_interrupt_processed,
     pop_next_interrupt,
+    requeue_interrupt,
 )
 
 logging.basicConfig(
@@ -81,6 +82,13 @@ class StreamProcessor:
     def __init__(self) -> None:
         self.redis = get_redis_client()
 
+    def reset_state(self) -> None:
+        """Clear existing script/history entries and load defaults."""
+        logger.info("Resetting stream processor state.")
+        self.redis.delete(HISTORY_KEY)
+        self._replace_script(DEFAULT_SCRIPT, AudioKind.GENERAL)
+        logger.info("Stream processor state reset complete.")
+
     def process_once(self) -> Optional[Dict[str, object]]:
         """Process the next unit of work (interrupt or script line)."""
 
@@ -91,7 +99,17 @@ class StreamProcessor:
                 interrupt.interrupt_id,
                 interrupt.kind.value,
             )
-            return self._handle_interrupt(interrupt)
+            try:
+                return self._handle_interrupt(interrupt)
+            except Exception:
+                logger.exception(
+                    "Error handling interrupt %s; requeueing.",
+                    interrupt.interrupt_id,
+                )
+                requeue_interrupt(interrupt)
+                return None
+        else:
+            logger.info("StreamProcessor cycle: no interrupts pending; processing script queue.")
 
         logger.debug("No interrupts pending; attempting to process script queue.")
         return self._handle_script_line()
@@ -352,6 +370,7 @@ def generate_audio_with_reference(
             "ras_win_len": ras_win_len,
             "raw_win_max_num_repeat": raw_win_max_num_repeat,
         },
+        timeout=15,
     )
 
     audio_b64 = response.choices[0].message.audio.data
