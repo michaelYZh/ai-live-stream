@@ -62,37 +62,26 @@ Hey, guys! Better pack some ice. It's gonna be a hot one. What is that smell.
 # [Speed] THAT'S IT! I'M DONE! Get him out of here! I can't do this anymore, bro! Every single time! You think this is funny?! THIS STREAM IS OVER! I AM OUT!
 # """
 DEFAULT_SCRIPT = """
-[Speed] YO YO YO! What's good, chat?! It's your boy, SPEED! We are LIVE right now!  
-[Speed] Chat sent me this paper called “Attention Is All You Need.” Bro… they finally get it! They wrote a paper about ME!  
 
-[Speed] Aight, let's see what this is. They say they made something called the Transformer.  
-[Speed] TRANSFORMER?! AIN'T NO WAY! We talkin' Optimus Prime?! SEWEY! Bro, what is this?!  
+[Spongebob] Ah-hah-hah-hah! Oh, hello Speed! Softmax is just a funny word! It's like asking a whole crowd of jellyfish which way to go, and they all point... but the one who points the hardest gets the most attention! It just helps pick the best one! Ah-hah-hah-hah!
 
-[Speed] Wait—nah. This ain't no Optimus Prime. This just a bunch of boxes and arrows, man.  
-[Speed] Looks like some modern art from math class! I don't get it!  
+[Speed] Oh! A'ight, Spongebob, thanks man. That... kinda makes sense.
 
-[Speed] …Hold up. Was that Trump?!  
-[Speed] Chat, did y'all hear that?! “No-Attention Speed”? Bro, shut up! I got the MOST attention in the world!  
-[Speed] You're fake news! Look, I'mma read this whole paper right now.  
+[Speed] Kinda. But still, why they gotta use these crazy words? Q, K, V... bro, this IS math class! I thought this was about Transformers! This is a scam! Y'all scammed me, chat!
 
-[Speed] Okay, okay… it says the attention part takes something called Q, K, and V — whatever that means —  
-[Speed] then it does this thing called “soft max” to mix 'em all together!  
-[Speed] Soft max?! Bro, that sound like a new mattress brand! “Introducing the SOFTMAX 3000!” I'm not doing homework on stream, man!  
+[Peter] Heheheheh. Hey Speed! This is worse than the time I tried to read Meg's diary. Y'know, "Dear diary, nobody understands me." Seriously, kid, you sound like Chris trying to explain algebra. Just stick to barkin', eh? Heheheheheh.
 
-[Speed] Donald, stop! Stop calling me that! Low energy?! I got MORE energy than your whole campaign!  
-[Speed] Look! AHHHHHHHHH! See?! ENERGY! You just a hater, bro!  
+[Speed] Bro, who is that?! Shut up, man! Don't call me Chris! I'm smarter than all y'all, bro! Watch this!
 
-[Speed] Alright, let me find something I understand… Hardware. Okay.  
-[Speed] They used eight NVIDIA P100 GPUs. P100?! Bro, that's weak! I got an RTX 4090 right now!  
-[Speed] I could run their whole science fair project WHILE playing Fortnite! My PC better than their machine!  
+[Speed] I'm gonna find something I actually understand. Okay, here! Hardware! They used... let's see ... eight NVIDIA P100 GPUs. P100?! BRO, THAT'S IT? I have an RTX 5090 RIGHT NOW! I could run their little science project while playing Fortnite... at the same time! My PC is BETTER than their whole machine! L! L! L!
 
-[Speed] SHUT UP! Just SHUT UP, man! You don't know me!  
-[Speed] I'm the BEST streamer in the world! People watch ME, not this dusty paper!  
+[Trump] Wrong! You know, I have the best computers. They're tremendous. Everyone agrees. But look at this guy... "No-Attention Speed." That's what I call him. He's got a 5090, but he can't even read a simple paper. It's sad! He's got low energy. Very low energy. Probably the lowest energy of any streamer. A total disaster.
 
-[Speed] That's it! I'm DONE!  
-[Speed] Get him OUTTA HERE! I can't do this no more, bro!  
-[Speed] Every single time! You think this is funny?!  
-[Speed] THIS STREAM IS OVER! I'M OUT!
+[Speed] SHUT UP! SHUT UP, MAN! Stop calling me that! Donald, I swear! Low energy? I have the MOST energy! LOOK! AAAAAARGH! OHOHOH! SEE?! ENERGY! You're just a hater! You're fake news!
+
+[Speed] I'm done with this! Every single time! Get him out of here! Get ALL of y'all out of here! You think this is funny?! I'm the best streamer in the world! People watch me! Not this stupid paper!
+
+[Speed] THAT'S IT! I'M DONE! THIS STREAM IS OVER! I AM OUT! PEACE!
 """
 
 PERSONA_REFERENCES = {
@@ -108,13 +97,19 @@ PERSONA_REFERENCES = {
 In this audio, the person is impersonating Donald Trump's voice. The pacing is measured, with strategic pauses to let insults land. The delivery should feel like a series of dismissive proclamations, consistently patronizing the streamer and methodically building up the roast with each message. The speaker is in a quiet room with NO music.
 """,
     },
-    "peter_griffin": {
+    "peter": {
         "path": REFERENCE_AUDIO_DIR / "peter_griffin_voice.wav",
         "transcript": PETER_GRIFFIN_REFERENCE_TRANSCRIPT,
+        "scene_desc": """
+The voice is a clear impersonation of Peter Griffin. It must be highly nasal and slightly gravelly, with a distinct, lazy New England accent. The delivery is goofy and meandering, as if he's just saying whatever comes to mind. His iconic, wheezy "Heheheheh" laugh or snort is a key characteristic. The tone should be annoyingly playful and trolling. The recording must be clean, close-mic, and studio-quality with no background noise.
+        """,
     },
     "spongebob": {
         "path": REFERENCE_AUDIO_DIR / "spongebob_voice.wav",
         "transcript": SPONGEBOB_REFERENCE_TRANSCRIPT,
+        "scene_desc": """
+This is a strong impersonation of Spongebob Squarepants. The voice must be very high-pitched, slightly nasal, and full of bubbly, cheerful energy. The pitch should wobble and often crack with excitement. His iconic high-pitched, rapid giggle ("Ah-hah-hah-hah") is essential. The delivery is bouncy and eager, but always polite and innocent. The recording must be clean, close-mic, and studio-quality with no background noise.
+        """,
     },
 }
 

@@ -209,13 +209,15 @@ class StreamProcessor:
         if not line:
             return None
 
-        speaker = line.split("[")[1].split("]")[0].strip()
+        speaker = line.split("[")[1].split("]")[0].strip().lower()
         line = line.split("]")[1].strip()
 
         logger.info(f"[{entry.get('persona')}][{speaker}] {line}")
 
         kind = AudioKind(entry.get("kind", AudioKind.GENERAL.value))
         persona = entry.get("persona") or DEFAULT_STREAMER_PERSONA
+        # TODO: temporary
+        persona = speaker
 
         audio_base64 = asyncio.run(
             agenerate_audio_with_persona(
@@ -374,6 +376,7 @@ def generate_audio_with_reference(
             "raw_win_max_num_repeat": raw_win_max_num_repeat,
         },
         timeout=30,
+        
     )
 
     audio_b64 = response.choices[0].message.audio.data
