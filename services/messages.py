@@ -10,7 +10,6 @@ from uuid import uuid4
 from db import (calculate_revenue, fetch_messages, insert_message,
                 message_count, seed_if_empty)
 from schemas.messages import MessageCreate
-from services.clients import get_boson_client
 from type import Gift, Message, MessageType
 
 GIFT_CATALOG: dict[str, tuple[str, int]] = {
@@ -174,6 +173,8 @@ def _extract_text(content: str | list[dict[str, str]]) -> str:
 
 
 def _generate_ai_content(topic_prompt: str) -> str:
+    from services.clients import get_boson_client
+
     try:
         client = get_boson_client()
         response = client.chat.completions.create(

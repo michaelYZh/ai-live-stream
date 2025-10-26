@@ -149,7 +149,15 @@ class StreamProcessor:
                 raw_win_max_num_repeat=None,
             )
         )
-        chunk_id = enqueue_audio_chunk(AudioKind.SUPERCHAT, audio_base64)
+        if message is None:
+            raise ValueError("Superchat interrupt missing message transcript.")
+
+        chunk_id = enqueue_audio_chunk(
+            AudioKind.SUPERCHAT,
+            audio_base64,
+            transcript=message,
+            speaker=persona,
+        )
 
         logger.info("Superchat audio chunk ready: %s", chunk_id)
 
@@ -238,7 +246,12 @@ class StreamProcessor:
                 n=5,
             )
         )
-        chunk_id = enqueue_audio_chunk(kind, audio_base64)
+        chunk_id = enqueue_audio_chunk(
+            kind,
+            audio_base64,
+            transcript=line,
+            speaker=persona,
+        )
 
         history_record = HistoryRecord(
             persona=persona,
@@ -449,8 +462,7 @@ async def agenerate_audio_with_persona(
         )
 
     if line_index is not None:
-        potential_wav = f"bests/{persona_key}_{line_index}_best.wav"
-        potential_wav = Path(potential_wav)
+        potential_wav = Path("assets") / "bests" / f"{persona_key}_{line_index}_best.wav"
         if potential_wav.exists():
             audio_b64 = base64.b64encode(potential_wav.read_bytes()).decode("utf-8")
             logger.info(f"Using cached best audio for line {line_index}.")
