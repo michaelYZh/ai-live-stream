@@ -73,7 +73,7 @@ PERSONA_REFERENCES = {
     "speed": {
         "path": REFERENCE_AUDIO_DIR / "speed_voice.wav",
         "transcript": SPEED_REFERENCE_TRANSCRIPT,
-        "scene_desc": "The tone is extremely high-energy and excited. The speaker talks fast and loudly.",
+        "scene_desc": "The voice should be extremely high-energy and loud, similar to iShowSpeed’s speaking style. The recording must sound clean, close-mic, and studio-quality, with no background noise. Speech should be fast, with sharp emphasis, sudden loudness spikes, and quick changes in pitch and emotional tone.",
     },
     "chinese_trump": {
         "path": REFERENCE_AUDIO_DIR / "chinese_trump_voice.wav",
@@ -94,7 +94,7 @@ In this audio, the person is impersonating Donald Trump's voice. The pacing is m
 
 MODIFY_SCRIPT_PROMPT_TEMPLATE = """
 <core_task>
-You will be given the Speech History of a livestream transcript and a New Superchat Message formatted as [Superchat_name] message_text. Write the next segment of the livestream transcript where the streamer explicitly calls out and addresses the Superchat_name and reacts to the content and tone of their message in-character in at most 2 sentences. If the sender is a well-known figure (e.g., Trump, Elon, Kanye), the response should acknowledge their recognizable traits, personality, or public history in a natural and fitting way. After those 2 sentences, smoothly transition back into the topic described in remaining_lines and continue it in the same direction. Your output must match the tone, pacing, personality, and energy shown in speech_history, and the length of your continuation should be similar to the length of remaining_lines. The result should feel like a natural continuation, not a new scene.
+You will be given the Speech History of a livestream transcript and a New Superchat Message formatted as [Superchat_name] message_text. Write the next segment of the livestream transcript where streamer explicitly calls out, and addresses the Superchat_name if Superchat_name is not None. The streamer should then react to the content and tone of their message in-character. If the Superchat_name is a well-known figure (e.g., Trump, Elon, Kanye), the response should acknowledge their recognizable traits, personality, or public history in a natural and fitting way. After this reaction, the streamer must smoothly transition back to and continue the topic contained in remaining_lines, speaking as if they are directly resuming from where they left off. The tone, personality, pacing, and style must be consistent with the Speech_History. The result should feel like a natural continuation, not a new scene.
 </core_task>
 
 <persona streamer={streamer}>
@@ -115,12 +115,13 @@ Logical Flow: Ensure Speed's reaction is a direct and natural response to the su
 You will receive:
 - speech_history: the spoken lines of the streamer
 - remaining_lines: the remaining lines of the script to be streamed
-- new_superchat: the new superchat message sent to the streamer
+- new_superchat: the new superchat message sent to the streamer formatted as [Superchat_name] message_text
 </input_format>
 
 <output_format>
 Your task is to provide the next logical lines of the script as the response.
 Each line should be prefixed with [{streamer}] 
+You should first react to new_superchat and Superchat_name if Superchat_name is not None in at most 2 sentences then continue speaking and finish the script in alignment with remaining_lines, matching its approximate length, pacing, and stopping point.
 </output_format>
 
 <example>
@@ -163,6 +164,6 @@ Each line should be prefixed with [{streamer}]
     </new_superchat>
 </input>
 
-Please proceed to write the next 5 lines of the script.
+Please continue the script using approximately the same number of lines as provided in remaining_lines.
 """
 LLM_SYSTEM_PROMPT = "You are an expert scriptwriter specializing in creating authentic, engaging, and voice-ready livestream transcripts. Your task is to continue an ongoing script based on new user comments (superchats)."
