@@ -1,4 +1,3 @@
-import json
 import os
 from pathlib import Path
 
@@ -53,20 +52,47 @@ All right! Ooops! I guess I rip my pants again. I'm on my way! Ready for another
 Hey, guys! Better pack some ice. It's gonna be a hot one. What is that smell.
 """
 
+# DEFAULT_SCRIPT = """
+# [Speed] Yo yo yo! We are LIVE! What's good, chat! It's your boy, Speed! Y'all sent me this paper, "Attention Is All You Need." Bro, they finally get it! They wrote a paper about me!
+# [Speed] Okay, let's find the good part. It says they propose a new thing, the Transformer. Wait, TRANSFORMER?! AIN'T NO WAY! We talkin' Optimus Prime? SEWEY! Bro, what is this?!
+# [Speed] This ain't no Optimus Prime! It's just a bunch of boxes and arrows! This looks like abstract art or something. I don't get it.
+# [Speed] Whoa! Was that Trump?! Chat, y'all hear that? "No-Attention Speed"? Bro, shut up! I have the most attention in the world! You're fake news! Watch, I'm gonna read this whole thing right now. Okay, what is this? An equation? It says Attention of Q, K, and V is softmax. Bro, what's a softmax? That sounds like a new mattress brand! I'm not doing homework on stream!
+# [Speed] Stop calling me that! Donald, I swear! Low energy? I have the most energy! Look! OHOHOH! See? Energy! You're just a hater. Let me find something I actually understand. Hardware! Okay, here! They used eight NVIDIA P100 GPUs. P100? Bro, that's it? I have an RTX 4090 right now! I could run their science project while playing Fortnite! My PC is better than their machine!
+# [Speed] SHUT UP! Just shut up, man! Stop calling me that! You don't know me! I'm the best streamer in the world! People watch ME! Not this stupid paper! I'm done with it!
+# [Speed] THAT'S IT! I'M DONE! Get him out of here! I can't do this anymore, bro! Every single time! You think this is funny?! THIS STREAM IS OVER! I AM OUT!
+# """
 DEFAULT_SCRIPT = """
-[Speed] Yo yo yo! We are LIVE! What's good, chat! It's your boy, Speed!
-[Speed] Y'all sent me this paper, "Attention Is All You Need." Bro, they finally get it! They wrote a paper about me!
-[Speed] Okay, let's find the good part. It says they propose a new thing, the Transformer.
-[Speed] Wait, TRANSFORMER?! AIN'T NO WAY! We talkin' Optimus Prime? SEWEY! Bro, what is this?!
-[Speed] This ain't no Optimus Prime! It's just a bunch of boxes and arrows! This looks like abstract art or something. I don't get it.
+[Speed] YO YO YO! What's good, chat?! It's your boy, SPEED! We are LIVE right now!  
+[Speed] Chat sent me this paper called “Attention Is All You Need.” Bro… they finally get it! They wrote a paper about ME!  
 
-[Speed] Whoa! Was that Trump?! Chat, y'all hear that? "No-Attention Speed"? Bro, shut up! I have the most attention in the world! You're fake news! Watch, I'm gonna read this whole thing right now. Okay, what is this? An equation? It says Attention of Q, K, and V is softmax. Bro, what's a softmax? That sounds like a new mattress brand! I'm not doing homework on stream!
+[Speed] Aight, let's see what this is. They say they made something called the Transformer.  
+[Speed] TRANSFORMER?! AIN'T NO WAY! We talkin' Optimus Prime?! SEWEY! Bro, what is this?!  
 
-[Speed] Stop calling me that! Donald, I swear! Low energy? I have the most energy! Look! OHOHOH! See? Energy! You're just a hater. Let me find something I actually understand. Hardware! Okay, here! They used eight NVIDIA P100 GPUs. P100? Bro, that's it? I have an RTX 4090 right now! I could run their science project while playing Fortnite! My PC is better than their machine!
+[Speed] Wait—nah. This ain't no Optimus Prime. This just a bunch of boxes and arrows, man.  
+[Speed] Looks like some modern art from math class! I don't get it!  
 
-[Speed] SHUT UP! Just shut up, man! Stop calling me that! You don't know me! I'm the best streamer in the world! People watch ME! Not this stupid paper! I'm done with it!
+[Speed] …Hold up. Was that Trump?!  
+[Speed] Chat, did y'all hear that?! “No-Attention Speed”? Bro, shut up! I got the MOST attention in the world!  
+[Speed] You're fake news! Look, I'mma read this whole paper right now.  
 
-[Speed] THAT'S IT! I'M DONE! Get him out of here! I can't do this anymore, bro! Every single time! You think this is funny?! THIS STREAM IS OVER! I AM OUT!
+[Speed] Okay, okay… it says the attention part takes something called Q, K, and V — whatever that means —  
+[Speed] then it does this thing called “soft max” to mix 'em all together!  
+[Speed] Soft max?! Bro, that sound like a new mattress brand! “Introducing the SOFTMAX 3000!” I'm not doing homework on stream, man!  
+
+[Speed] Donald, stop! Stop calling me that! Low energy?! I got MORE energy than your whole campaign!  
+[Speed] Look! AHHHHHHHHH! See?! ENERGY! You just a hater, bro!  
+
+[Speed] Alright, let me find something I understand… Hardware. Okay.  
+[Speed] They used eight NVIDIA P100 GPUs. P100?! Bro, that's weak! I got an RTX 4090 right now!  
+[Speed] I could run their whole science fair project WHILE playing Fortnite! My PC better than their machine!  
+
+[Speed] SHUT UP! Just SHUT UP, man! You don't know me!  
+[Speed] I'm the BEST streamer in the world! People watch ME, not this dusty paper!  
+
+[Speed] That's it! I'm DONE!  
+[Speed] Get him OUTTA HERE! I can't do this no more, bro!  
+[Speed] Every single time! You think this is funny?!  
+[Speed] THIS STREAM IS OVER! I'M OUT!
 """
 
 PERSONA_REFERENCES = {

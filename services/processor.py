@@ -201,11 +201,7 @@ class StreamProcessor:
     def _handle_script_line(self) -> Optional[Dict[str, object]]:
         entry = self._pop_next_script_entry()
         if entry is None:
-            # Reload the default script and try again.
-            self._replace_script(DEFAULT_SCRIPT, AudioKind.GENERAL)
-            entry = self._pop_next_script_entry()
-            if entry is None:
-                return None
+            return None
 
         line = entry.get("line", "").strip()
         if not line:
