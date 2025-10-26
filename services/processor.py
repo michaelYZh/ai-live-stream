@@ -13,6 +13,7 @@ from pathlib import Path
 from typing import Dict, Optional
 
 import numpy as np
+from openai import max_retries
 from tenacity import (
     before_sleep_log,
     retry,
@@ -231,7 +232,7 @@ class StreamProcessor:
                 raw_win_max_num_repeat=None,
                 valid_sampling=None,
                 line_index=self.line_index,
-                n=3,
+                n=5,
             )
         )
         chunk_id = enqueue_audio_chunk(kind, audio_base64)
@@ -376,7 +377,6 @@ def generate_audio_with_reference(
             "raw_win_max_num_repeat": raw_win_max_num_repeat,
         },
         timeout=30,
-        
     )
 
     audio_b64 = response.choices[0].message.audio.data
@@ -446,7 +446,7 @@ async def agenerate_audio_with_persona(
         )
 
     if line_index is not None:
-        potential_wav = OUTPUT_AUDIO_DIR / f"{persona_key}_{line_index}_best.wav"
+        potential_wav = f"bests/{persona_key}_{line_index}_best.wav"
         if potential_wav.exists():
             audio_b64 = base64.b64encode(potential_wav.read_bytes()).decode("utf-8")
             logger.info(f"Using cached best audio for line {line_index}.")
@@ -618,3 +618,8 @@ def generate_script_with_llm(  # pragma: no cover - stub for integration
     )
     new_script = response.choices[0].message.content
     return new_script
+
+# 1. superchat format (shorter, more concise) for example, eat shit Speed
+# 2. After superchat with special character, speed should react intensely on the identity of the sender
+# 3. 中间随便加一句谢谢大哥们的礼物
+# 4. callback 今天怎么回事

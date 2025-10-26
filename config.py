@@ -62,24 +62,37 @@ Hey, guys! Better pack some ice. It's gonna be a hot one. What is that smell.
 # [Speed] THAT'S IT! I'M DONE! Get him out of here! I can't do this anymore, bro! Every single time! You think this is funny?! THIS STREAM IS OVER! I AM OUT!
 # """
 DEFAULT_SCRIPT = """
+[Speed] Yo yo yo! We are LIVE! What's good, chat! It's your boy, Speed! Y'all kept sending me this paper... "Attention Is All You Need." Bro, they finally get it! They wrote a paper about me! Let's go!
 
-[Spongebob] Ah-hah-hah-hah! Oh, hello Speed! Softmax is just a funny word! It's like asking a whole crowd of jellyfish which way to go, and they all point... but the one who points the hardest gets the most attention! It just helps pick the best one! Ah-hah-hah-hah!
+[Speed] Okay, let's find the good part... It says they propose a new thing, the "Transformer." Wait... TRANSFORMER?! AIN'T NO WAY! We talkin' Optimus Prime? Autobots?! ROLL OUT! Bro, what is this?!
 
-[Speed] Oh! A'ight, Spongebob, thanks man. That... kinda makes sense.
+[Speed] This ain't no Optimus Prime! It's just a bunch of boxes and arrows! What is this? This looks like... abstract art or something. I don't get it, bro. Chat, am I supposed to understand this?
 
-[Speed] Kinda. But still, why they gotta use these crazy words? Q, K, V... bro, this IS math class! I thought this was about Transformers! This is a scam! Y'all scammed me, chat!
+[Speed] Okay, what is this? An equation? It says... Attention of Q, K, and V... is softmax. Bro, what is softmax? That sounds like a new mattress brand! I'm not doing homework on stream! This is boring!
 
-[Peter] Heheheheh. Hey Speed! This is worse than the time I tried to read Meg's diary. Y'know, "Dear diary, nobody understands me." Seriously, kid, you sound like Chris trying to explain algebra. Just stick to barkin', eh? Heheheheheh.
+[Spongebob] Ooh! 'Attention' is just like when Mr. Krabs looks at a really shiny penny! Ah-hah-hah!
 
-[Speed] Bro, who is that?! Shut up, man! Don't call me Chris! I'm smarter than all y'all, bro! Watch this!
+[Speed] Bro... wait. Is that Spongebob?! Chat, am I trippin'? Yo, Spongebob! Alright, thanks man. That that kinda makes sense.
 
-[Speed] I'm gonna find something I actually understand. Okay, here! Hardware! They used... let's see ... eight NVIDIA P100 GPUs. P100?! BRO, THAT'S IT? I have an RTX 5090 RIGHT NOW! I could run their little science project while playing Fortnite... at the same time! My PC is BETTER than their whole machine! L! L! L!
+[Speed] Kinda. But still, why they gotta use these crazy words? Q, K, V bro, this is math class! I thought this was about Transformers! This is a scam! Y'all scammed me, chat!
 
-[Trump] Wrong! You know, I have the best computers. They're tremendous. Everyone agrees. But look at this guy... "No-Attention Speed." That's what I call him. He's got a 5090, but he can't even read a simple paper. It's sad! He's got low energy. Very low energy. Probably the lowest energy of any streamer. A total disaster.
+[Peter] This paper is missin' somethin', Speed. It's missin' "The Bird." 'Cause everybody knows the Bird is the Word!
 
-[Speed] SHUT UP! SHUT UP, MAN! Stop calling me that! Donald, I swear! Low energy? I have the MOST energy! LOOK! AAAAAARGH! OHOHOH! SEE?! ENERGY! You're just a hater! You're fake news!
+[Peter] All these boxes and arrows look pretty sus, Speed. Like that one red crewmate. Freakin' sweet.
 
-[Speed] I'm done with this! Every single time! Get him out of here! Get ALL of y'all out of here! You think this is funny?! I'm the best streamer in the world! People watch me! Not this stupid paper!
+[Speed] Bro, shut up, man! Yo, chat, what is GOING ON today? First Spongebob, now this fat guy? Y'all are using AI, bro! This ain't real!
+
+[Speed] I'm gonna find something I actually understand. Okay, here! Hardware! They used... let's see ... eight NVIDIA P100s. P one hundred? bro, THAT'S IT? I have an RTX fourty ninety RIGHT NOW! I could run their little science project while playing Fortnite at the same time! My PC is BETTER than their whole machine!
+
+[Trump] Wrong! Your 4090 is okay, but my computers are tremendous. The best. Everyone agrees.
+
+[Trump] I call him "No-Attention Speed." He can't even read a simple paper. Very sad! Low energy!
+
+[Speed] SHUT UP! SHUT UP, MAN! Stop calling me that! Donald, I swear! Low energy? I have the MOST energy! LOOK! OH OH OH! SEE?! ENERGY! You're just a hater! You're fake news!
+
+[Trump] I build the best machines. I'd build a machine so good at this... and I'd make the nerds pay for it! Total disaster, this kid.
+
+[Speed] Shut up, man! You're the real softmax! Yeah, you're a soft mattress! Bro, stop yelling Make America Great Again! You can't even make your hair great again! I'm the one with the REAL attention! You're fake news! You're done! Get him out of here!
 
 [Speed] THAT'S IT! I'M DONE! THIS STREAM IS OVER! I AM OUT! PEACE!
 """
@@ -88,9 +101,9 @@ PERSONA_REFERENCES = {
     "speed": {
         "path": REFERENCE_AUDIO_DIR / "speed_voice.wav",
         "transcript": SPEED_REFERENCE_TRANSCRIPT,
-        "scene_desc": "The voice should be extremely high-energy and loud, similar to iShowSpeed’s speaking style. The recording must sound clean, close-mic, and studio-quality, with no background noise. Speech should be fast, with sharp emphasis, sudden loudness spikes, and quick changes in pitch and emotional tone.",
+        "scene_desc": "The voice should be extremely high-energy and loud, similar to iShowSpeed's speaking style. The recording must sound clean, close-mic, and studio-quality, with no background noise. Speech should be fast, with sharp emphasis, sudden loudness spikes, and quick changes in pitch and emotional tone.",
     },
-    "chinese_trump": {
+    "trump": {
         "path": REFERENCE_AUDIO_DIR / "chinese_trump_voice.wav",
         "transcript": CHINESE_TRUMP_REFERENCE_TRANSCRIPT,
         "scene_desc": """

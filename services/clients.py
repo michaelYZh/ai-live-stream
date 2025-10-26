@@ -10,7 +10,7 @@ from openai import OpenAI
 from config import BOSON_API_KEYS, BOSON_BASE_URL, REDIS_URL
 
 _boson_clients: List[OpenAI] = [
-    OpenAI(api_key=key, base_url=BOSON_BASE_URL) for key in BOSON_API_KEYS
+    OpenAI(api_key=key, base_url=BOSON_BASE_URL, max_retries=0) for key in BOSON_API_KEYS
 ]
 
 
