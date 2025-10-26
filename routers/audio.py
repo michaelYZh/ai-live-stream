@@ -5,7 +5,7 @@ import logging
 from fastapi import APIRouter, status
 
 from schemas import AudioEnqueueRequest, AudioFetchResponse, InterruptRequest, InterruptResponse
-from services.audio import enqueue_audio_chunk, fetch_audio_chunks
+from services.audio import count_audio_chunks, enqueue_audio_chunk, fetch_audio_chunks
 from services.interrupts import InterruptResult, register_interrupt
 
 router = APIRouter(prefix="/audio", tags=["audio"])
@@ -20,6 +20,15 @@ async def pull_audio() -> AudioFetchResponse:
     logger.info("Fetched %d audio chunks from queue.", len(chunks))
 
     return AudioFetchResponse(chunks=chunks)
+
+
+@router.get("/count")
+async def audio_queue_count() -> dict:
+    """Return the number of pending audio chunks."""
+
+    count = count_audio_chunks()
+    logger.info("Audio queue count requested: %d", count)
+    return {"count": count}
 
 
 @router.post("", status_code=status.HTTP_202_ACCEPTED)
