@@ -34,13 +34,14 @@ from config import (
     LLM_SYSTEM_PROMPT,
     MODIFY_SCRIPT_PROMPT_TEMPLATE,
 )
-from services.audio import AudioKind, enqueue_audio_chunk
+from services.audio import AudioKind, enqueue_audio_chunk, reset_audio_queue
 from services.clients import get_boson_client, get_redis_client
 from services.interrupts import (
     InterruptRecord,
     mark_interrupt_processed,
     pop_next_interrupt,
     requeue_interrupt,
+    reset_interrupt_state,
 )
 
 logging.basicConfig(
@@ -88,6 +89,8 @@ class StreamProcessor:
     def reset_state(self) -> None:
         """Clear existing script/history entries and load defaults."""
         logger.info("Resetting stream processor state.")
+        reset_audio_queue()
+        reset_interrupt_state()
         self.redis.delete(HISTORY_KEY)
         self._replace_script(DEFAULT_SCRIPT, AudioKind.GENERAL)
         logger.info("Stream processor state reset complete.")
@@ -619,8 +622,3 @@ def generate_script_with_llm(  # pragma: no cover - stub for integration
     )
     new_script = response.choices[0].message.content
     return new_script
-
-# 1. superchat format (shorter, more concise) for example, eat shit Speed
-# 2. After superchat with special character, speed should react intensely on the identity of the sender
-# 3. 中间随便加一句谢谢大哥们的礼物
-# 4. callback 今天怎么回事

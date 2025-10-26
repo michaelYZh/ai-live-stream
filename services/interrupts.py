@@ -150,3 +150,12 @@ def requeue_interrupt(record: InterruptRecord) -> None:
     client.hset(_INTERRUPT_DATA_KEY, record.interrupt_id, json.dumps(payload))
     client.rpush(_INTERRUPT_QUEUE_KEY, record.interrupt_id)
     logger.info("Requeued interrupt %s onto queue.", record.interrupt_id)
+
+
+def reset_interrupt_state() -> None:
+    """Clear all interrupt queue and metadata entries."""
+
+    client = get_redis_client()
+    # Delete both queue and hash so no stale work remains.
+    client.delete(_INTERRUPT_QUEUE_KEY, _INTERRUPT_DATA_KEY)
+    logger.info("Cleared interrupt queue and metadata store.")

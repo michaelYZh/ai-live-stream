@@ -50,3 +50,10 @@ def count_audio_chunks() -> int:
 
     client = get_redis_client()
     return client.llen(AUDIO_QUEUE_KEY)
+
+
+def reset_audio_queue() -> None:
+    """Remove any pending audio chunks from the queue."""
+
+    client = get_redis_client()
+    client.delete(AUDIO_QUEUE_KEY)
