@@ -6,22 +6,15 @@ from pydantic import BaseModel, Field, model_validator
 from services.audio import AudioKind
 
 
-class AudioChunk(BaseModel):
-    chunk_id: str = Field(
-        description="Unique identifier for this audio chunk.")
-    audio_base64: str = Field(description="Base64-encoded audio data.")
-
-
 class AudioEnqueueRequest(BaseModel):
     kind: AudioKind = Field(description="Category of audio being enqueued.")
     audio_base64: str = Field(description="Base64-encoded audio chunk.")
 
 
 class AudioFetchResponse(BaseModel):
-    kind: AudioKind = Field(description="Category of audio that was fetched.")
-    chunks: List[AudioChunk] = Field(
+    chunks: List[str] = Field(
         default_factory=list,
-        description="Ordered collection of pending audio chunks for this category.",
+        description="Ordered collection of pending audio chunks ready for playback.",
     )
 
 

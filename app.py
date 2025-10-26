@@ -13,7 +13,13 @@ from routers.audio import router as audio_router
 from routers.messages import router as messages_router
 from services.processor import StreamProcessor
 
-logger = logging.getLogger("stream_processor")
+if not logging.getLogger().handlers:
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(asctime)s %(levelname)s [%(name)s] %(message)s",
+    )
+
+logger = logging.getLogger(__name__)
 
 
 @asynccontextmanager

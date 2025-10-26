@@ -1,31 +1,25 @@
 from __future__ import annotations
 
-from fastapi import APIRouter, Query, status
+import logging
 
-from schemas import (
-    AudioChunk,
-    AudioEnqueueRequest,
-    AudioFetchResponse,
-    InterruptRequest,
-    InterruptResponse,
-)
+from fastapi import APIRouter, status
+
+from schemas import AudioEnqueueRequest, AudioFetchResponse, InterruptRequest, InterruptResponse
 from services.audio import AudioKind, enqueue_audio_chunk, fetch_audio_chunks
 from services.interrupts import InterruptResult, register_interrupt
 
 router = APIRouter(prefix="/audio", tags=["audio"])
+logger = logging.getLogger(__name__)
 
 
 @router.get("", response_model=AudioFetchResponse)
-async def pull_audio(kind: AudioKind = Query(default=AudioKind.GENERAL)) -> AudioFetchResponse:
-    """Return queued audio chunks for the requested category."""
+async def pull_audio() -> AudioFetchResponse:
+    """Return queued audio chunks in playback order."""
 
-    chunks = fetch_audio_chunks(kind)
-    chunk_models = [
-        AudioChunk(chunk_id=chunk_id, audio_base64=audio)
-        for chunk_id, audio in chunks
-    ]
+    chunks = fetch_audio_chunks()
+    logger.info("Fetched %d audio chunks from queue.", len(chunks))
 
-    return AudioFetchResponse(kind=kind, chunks=chunk_models)
+    return AudioFetchResponse(chunks=chunks)
 
 
 @router.post("", status_code=status.HTTP_202_ACCEPTED)
@@ -33,6 +27,7 @@ async def push_audio(request: AudioEnqueueRequest) -> dict:
     """Accept a new audio chunk and enqueue it for later playback."""
 
     chunk_id = enqueue_audio_chunk(request.kind, request.audio_base64)
+    logger.info("Received audio chunk %s via push for kind %s.", chunk_id, request.kind.value)
 
     return {"status": "accepted", "chunk_id": chunk_id}
 
@@ -45,6 +40,12 @@ async def trigger_interrupt(request: InterruptRequest) -> InterruptResponse:
         kind=request.kind,
         persona=request.persona,
         message=request.message,
+    )
+    logger.info(
+        "Registered %s interrupt %s for persona %s.",
+        request.kind.value,
+        result.interrupt_id,
+        request.persona or "default",
     )
 
     return InterruptResponse(

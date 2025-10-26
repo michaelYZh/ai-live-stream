@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import json
 from enum import StrEnum
-from typing import List, Tuple
+from typing import List
 from uuid import uuid4
 
 from services.clients import get_redis_client
@@ -14,8 +14,7 @@ class AudioKind(StrEnum):
     GIFT = "gift"
 
 
-def _queue_key(kind: AudioKind) -> str:
-    return f"stream:audio:{kind.value}"
+AUDIO_QUEUE_KEY = "stream:audio:queue"
 
 
 def enqueue_audio_chunk(kind: AudioKind, audio_base64: str) -> str:
@@ -23,23 +22,24 @@ def enqueue_audio_chunk(kind: AudioKind, audio_base64: str) -> str:
 
     client = get_redis_client()
     chunk_id = uuid4().hex
-    payload = json.dumps({"chunk_id": chunk_id, "audio_base64": audio_base64})
-    client.rpush(_queue_key(kind), payload)
+    payload = json.dumps(
+        {"chunk_id": chunk_id, "audio_base64": audio_base64, "kind": kind.value}
+    )
+    client.rpush(AUDIO_QUEUE_KEY, payload)
     return chunk_id
 
 
-def fetch_audio_chunks(kind: AudioKind) -> List[Tuple[str, str]]:
-    """Fetch and remove pending audio chunks for the given kind."""
+def fetch_audio_chunks() -> List[str]:
+    """Fetch and remove pending audio chunks in chronological order."""
 
     client = get_redis_client()
-    key = _queue_key(kind)
-    chunks: List[Tuple[str, str]] = []
+    chunks: List[str] = []
 
     while True:
-        payload = client.lpop(key)
+        payload = client.lpop(AUDIO_QUEUE_KEY)
         if payload is None:
             break
         data = json.loads(payload)
-        chunks.append((data["chunk_id"], data["audio_base64"]))
+        chunks.append(data["audio_base64"])
 
     return chunks

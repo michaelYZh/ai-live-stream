@@ -4,6 +4,7 @@ import base64
 import json
 import time
 import wave
+import logging
 from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Dict, Optional
@@ -25,6 +26,7 @@ from services.interrupts import (
     pop_next_interrupt,
 )
 
+logger = logging.getLogger(__name__)
 
 @dataclass
 class HistoryRecord:
@@ -67,8 +69,14 @@ class StreamProcessor:
 
         interrupt = pop_next_interrupt()
         if interrupt:
+            logger.info(
+                "Processing interrupt %s (%s)",
+                interrupt.interrupt_id,
+                interrupt.kind.value,
+            )
             return self._handle_interrupt(interrupt)
 
+        logger.debug("No interrupts pending; attempting to process script queue.")
         return self._handle_script_line()
 
     def _handle_interrupt(self, record: InterruptRecord) -> Dict[str, object]:
@@ -82,6 +90,12 @@ class StreamProcessor:
         message = record.message
         persona = record.persona
 
+        logger.info(
+            "Generating superchat audio for interrupt %s with persona %s",
+            record.interrupt_id,
+            persona or DEFAULT_STREAMER_PERSONA,
+        )
+
         audio_base64 = generate_audio_with_persona(
             persona,
             message,
@@ -91,6 +105,9 @@ class StreamProcessor:
             raw_win_max_num_repeat=20,
         )
         chunk_id = enqueue_audio_chunk(AudioKind.SUPERCHAT, audio_base64)
+
+        logger.info("Superchat audio chunk ready: %s", chunk_id)
+
         history_record = HistoryRecord(
             persona=persona,
             text=message,
@@ -104,7 +121,10 @@ class StreamProcessor:
         remaining_script = self._remaining_script_text()
         new_script = generate_script_with_llm(history_snapshot, message, remaining_script)
         if new_script:
+            logger.info("LLM returned new script in response to superchat interrupt.")
             self._replace_script(new_script, AudioKind.GENERAL)
+        else:
+            logger.info("LLM returned no follow-up script for superchat interrupt.")
 
         mark_interrupt_processed(record.interrupt_id, status="processed")
 
@@ -121,7 +141,16 @@ class StreamProcessor:
         remaining_script = self._remaining_script_text()
         new_script = generate_script_with_llm(history_snapshot, DEFAULT_GIFT_PROMPT, remaining_script)
         if new_script:
+            logger.info(
+                "LLM generated gift follow-up script for interrupt %s",
+                record.interrupt_id,
+            )
             self._replace_script(new_script, AudioKind.GIFT)
+        else:
+            logger.info(
+                "LLM returned no script for gift interrupt %s",
+                record.interrupt_id,
+            )
 
         mark_interrupt_processed(record.interrupt_id, status="queued_script")
 
@@ -165,6 +194,13 @@ class StreamProcessor:
         )
         self._append_history(history_record)
 
+        logger.info(
+            "Generated script line audio chunk %s (%s persona %s)",
+            chunk_id,
+            kind.value,
+            persona,
+        )
+
         return {
             "type": kind.value,
             "chunk_id": chunk_id,
@@ -176,6 +212,7 @@ class StreamProcessor:
         self.redis.delete(SCRIPT_QUEUE_KEY)
         lines = [line.strip() for line in script.splitlines() if line.strip()]
         if not lines:
+            logger.info("Received empty script; script queue cleared.")
             return
 
         for line in lines:
@@ -186,6 +223,12 @@ class StreamProcessor:
             }
             self.redis.rpush(SCRIPT_QUEUE_KEY, json.dumps(entry))
 
+        logger.info(
+            "Loaded %d lines into script queue with kind %s.",
+            len(lines),
+            default_kind.value,
+        )
+
     def _pop_next_script_entry(self) -> Optional[Dict[str, object]]:
         payload = self.redis.lpop(SCRIPT_QUEUE_KEY)
         if payload is None:
@@ -194,6 +237,7 @@ class StreamProcessor:
 
     def _append_history(self, record: HistoryRecord) -> None:
         self.redis.rpush(HISTORY_KEY, record.to_json())
+        logger.debug("Appended history entry for persona %s.", record.persona)
 
     def _history_snapshot(self, limit: int = 50) -> str:
         start = -limit if limit > 0 else 0
@@ -203,6 +247,11 @@ class StreamProcessor:
             for p in payloads
         ]
         history_text = "".join(f"{record.to_str()}\n" for record in records)
+        logger.debug(
+            "Retrieved %d history entries for snapshot (limit=%d).",
+            len(records),
+            limit,
+        )
         return history_text
 
     def _remaining_script_text(self) -> str:
@@ -213,6 +262,7 @@ class StreamProcessor:
             line = entry.get("line", "").strip()
             if line:
                 lines.append(line)
+        logger.debug("Collected %d script lines from queue.", len(lines))
         return "\n".join(lines)
 
 
