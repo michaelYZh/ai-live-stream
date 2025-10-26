@@ -4,6 +4,7 @@ import asyncio
 import base64
 import json
 import logging
+import os
 import time
 import wave
 import logging
@@ -81,6 +82,7 @@ class StreamProcessor:
 
     def __init__(self) -> None:
         self.redis = get_redis_client()
+        self.line_index = 0
 
     def reset_state(self) -> None:
         """Clear existing script/history entries and load defaults."""
@@ -226,6 +228,7 @@ class StreamProcessor:
                 ras_win_len=None,
                 raw_win_max_num_repeat=None,
                 valid_sampling=None,
+                line_index=self.line_index,
             )
         )
         chunk_id = enqueue_audio_chunk(kind, audio_base64)
@@ -245,6 +248,8 @@ class StreamProcessor:
             kind.value,
             persona,
         )
+        
+        self.line_index += 1
 
         return {
             "type": kind.value,
@@ -254,6 +259,7 @@ class StreamProcessor:
         }
 
     def _replace_script(self, script: str, default_kind: AudioKind) -> None:
+        self.line_index = 0
         self.redis.delete(SCRIPT_QUEUE_KEY)
         lines = [line.strip() for line in script.splitlines() if line.strip()]
         if not lines:
@@ -366,7 +372,7 @@ def generate_audio_with_reference(
             "ras_win_len": ras_win_len,
             "raw_win_max_num_repeat": raw_win_max_num_repeat,
         },
-        timeout=15,
+        timeout=30,
     )
 
     audio_b64 = response.choices[0].message.audio.data
@@ -413,6 +419,7 @@ async def agenerate_audio_with_persona(
     reference_transcript: Optional[str] = None,
     reference_audio_path: Optional[Path] = None,
     valid_sampling: Optional[int] = None,
+    line_index: Optional[int] = None,
 ) -> str:
     """Generate audio for the given persona and script."""
     persona_key = persona.lower().replace(" ", "_")
@@ -432,6 +439,13 @@ async def agenerate_audio_with_persona(
         raise FileNotFoundError(
             f"Reference audio not found for persona '{persona_key}': {reference_path}"
         )
+
+    if line_index is not None:
+        potential_wav = OUTPUT_AUDIO_DIR / f"{persona_key}_{line_index}_best.wav"
+        if potential_wav.exists():
+            audio_b64 = base64.b64encode(potential_wav.read_bytes()).decode("utf-8")
+            logger.info(f"Using cached best audio for line {line_index}.")
+            return audio_b64
 
     system_prompt = f"Generate audio following instruction. Speak consistently, naturally, and continuously.\n<|scene_desc_start|>\n{persona_info['scene_desc']}\n<|scene_desc_end|>"
 
@@ -475,13 +489,23 @@ async def agenerate_audio_with_persona(
 
     if SAVE_TTS_WAV:
         OUTPUT_AUDIO_DIR.mkdir(parents=True, exist_ok=True)
-        wav_path = OUTPUT_AUDIO_DIR / f"{persona_key}_{int(time.time() * 1000)}.wav"
+        if line_index is None:
+            wav_path = OUTPUT_AUDIO_DIR / f"{persona_key}_{int(time.time() * 1000)}.wav"
+        else:
+            existing_wavs = [f for f in os.listdir(OUTPUT_AUDIO_DIR) if f.startswith(f"{persona_key}_{line_index}_")]
+            if not existing_wavs:
+                last_file_idx = -1
+            else:
+                existing_wavs.sort(key=lambda x: int(x.split("_")[-1].split(".")[0]))
+                last_file_idx = int(existing_wavs[-1].split("_")[-1].split(".")[0])
+            wav_path = OUTPUT_AUDIO_DIR / f"{persona_key}_{line_index}_{last_file_idx + 1}.wav"
         audio_bytes = base64.b64decode(audio_b64)
         with wave.open(str(wav_path), "wb") as wf:
             wf.setnchannels(1)
             wf.setsampwidth(2)
             wf.setframerate(24000)
             wf.writeframes(audio_bytes)
+        logger.info(f"Saved audio for line {line_index} to {wav_path}.")
 
     return audio_b64
 
