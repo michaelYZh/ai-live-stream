@@ -44,6 +44,7 @@ async def push_audio(request: AudioEnqueueRequest) -> dict:
         request.kind,
         request.audio_base64,
         transcript=request.transcript,
+        speaker=request.speaker,
     )
     logger.info("Received audio chunk %s via push for kind %s.", chunk_id, request.kind.value)
 

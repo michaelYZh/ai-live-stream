@@ -156,6 +156,7 @@ class StreamProcessor:
             AudioKind.SUPERCHAT,
             audio_base64,
             transcript=message,
+            speaker=persona,
         )
 
         logger.info("Superchat audio chunk ready: %s", chunk_id)
@@ -249,6 +250,7 @@ class StreamProcessor:
             kind,
             audio_base64,
             transcript=line,
+            speaker=persona,
         )
 
         history_record = HistoryRecord(

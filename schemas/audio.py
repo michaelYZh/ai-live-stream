@@ -10,13 +10,15 @@ class AudioEnqueueRequest(BaseModel):
     kind: AudioKind = Field(description="Category of audio being enqueued.")
     audio_base64: str = Field(description="Base64-encoded audio chunk.")
     transcript: str = Field(description="Text transcript associated with the audio chunk.")
+    speaker: str = Field(description="Identifier for the persona voice used in the audio chunk.")
 
 
 class AudioChunk(BaseModel):
     chunk_id: str = Field(description="Identifier of the audio chunk.")
     kind: AudioKind = Field(description="Category of the audio chunk.")
-    audio_base64: str = Field(description="Base64-encoded audio data.")
     transcript: str = Field(description="Transcript associated with the audio chunk.")
+    speaker: str = Field(description="Persona voice associated with the audio chunk.")
+    audio_base64: str = Field(description="Base64-encoded audio data.")
 
 
 class AudioFetchResponse(BaseModel):

@@ -21,6 +21,7 @@ def enqueue_audio_chunk(
     kind: AudioKind,
     audio_base64: str,
     transcript: str,
+    speaker: str,
 ) -> str:
     """Store an audio chunk into Redis for later playback and return its identifier."""
 
@@ -32,6 +33,7 @@ def enqueue_audio_chunk(
             "audio_base64": audio_base64,
             "kind": kind.value,
             "transcript": transcript,
+            "speaker": speaker,
         }
     )
     client.rpush(AUDIO_QUEUE_KEY, payload)
@@ -54,6 +56,10 @@ def fetch_audio_chunks() -> List[Dict[str, object]]:
         if transcript is None:
             raise ValueError("Audio chunk payload missing transcript.")
 
+        speaker = data.get("speaker")
+        if speaker is None:
+            raise ValueError("Audio chunk payload missing speaker.")
+
         try:
             kind = AudioKind(data.get("kind", AudioKind.GENERAL.value))
         except ValueError:
@@ -69,6 +75,7 @@ def fetch_audio_chunks() -> List[Dict[str, object]]:
                 "audio_base64": data.get("audio_base64", ""),
                 "kind": kind,
                 "transcript": transcript,
+                "speaker": speaker,
             }
         )
 
