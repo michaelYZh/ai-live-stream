@@ -29,6 +29,8 @@ from config import (
     PERSONA_REFERENCES,
     SAVE_TTS_WAV,
     TTS_MODEL,
+    LLM_SYSTEM_PROMPT,
+    MODIFY_SCRIPT_PROMPT_TEMPLATE,
 )
 from services.audio import AudioKind, enqueue_audio_chunk
 from services.clients import get_boson_client, get_redis_client
@@ -156,7 +158,7 @@ class StreamProcessor:
 
         history_snapshot = self._history_snapshot()
         remaining_script = self._remaining_script_text()
-        new_script = generate_script_with_llm(history_snapshot, message, remaining_script)
+        new_script = generate_script_with_llm(history_snapshot, message, remaining_script, persona)
         if new_script:
             logger.info("LLM returned new script in response to superchat interrupt.")
             self._replace_script(new_script, AudioKind.GENERAL)
@@ -556,17 +558,28 @@ def generate_script_with_llm(  # pragma: no cover - stub for integration
     history: str,
     input_text: str,
     remaining_script: str,
+    persona: str = None,
 ) -> str:
     """Generate a new script based on recent history, incoming context, and queued script."""
+    streamer_persona_info = PERSONA_REFERENCES.get(DEFAULT_STREAMER_PERSONA)
+    user_prompt = MODIFY_SCRIPT_PROMPT_TEMPLATE.format(
+        streamer=DEFAULT_STREAMER_PERSONA,
+        stramer_persona=streamer_persona_info["scene_desc"],
+        speech_history=history,
+        remaining_lines=remaining_script,
+        superchat_sender=persona,
+        superchat_message=input_text,
+    )
     client = get_boson_client()
     response = client.chat.completions.create(
         model=LLM_MODEL,
         messages=[
-            {"role": "system", "content": "TODO"},
-            {"role": "user", "content": "TOOD"}
+            {"role": "system", "content": LLM_SYSTEM_PROMPT},
+            {"role": "user", "content": user_prompt}
         ],
         stream=False,
         max_tokens=4096,
         temperature=0.7,
     )
-    return response.choices[0].message.content
+    new_script = response.choices[0].message.content
+    return new_script
