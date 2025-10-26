@@ -1,3 +1,4 @@
+import json
 import os
 from pathlib import Path
 
@@ -5,7 +6,11 @@ from dotenv import load_dotenv
 
 load_dotenv(override=True)
 
-BOSON_API_KEY = os.environ["BOSON_API_KEY"]
+BOSON_API_KEYS = os.getenv("BOSON_API_KEYS", "").split(",")
+if not BOSON_API_KEYS:
+    raise RuntimeError(
+        "BOSON_API_KEYS must be set in the environment."
+    )
 BOSON_BASE_URL = os.getenv("BOSON_BASE_URL", "https://hackathon.boson.ai/v1")
 REDIS_URL = os.getenv("REDIS_URL", "redis://localhost:6379/0")
 

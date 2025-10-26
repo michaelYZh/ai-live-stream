@@ -2,16 +2,15 @@
 
 from __future__ import annotations
 
-import os
 import random
 from datetime import datetime, timedelta, timezone
 from typing import Iterable, List
 from uuid import uuid4
 
-import openai
 from db import (calculate_revenue, fetch_messages, insert_message,
                 message_count, seed_if_empty)
 from schemas.messages import MessageCreate
+from services.clients import get_boson_client
 from type import Gift, Message, MessageType
 
 GIFT_CATALOG: dict[str, tuple[str, int]] = {
@@ -175,14 +174,8 @@ def _extract_text(content: str | list[dict[str, str]]) -> str:
 
 
 def _generate_ai_content(topic_prompt: str) -> str:
-    api_key = os.getenv("BOSON_API_KEY")
-    base_url = os.getenv("BOSON_BASE_URL", "https://hackathon.boson.ai/v1")
-
-    if not api_key:
-        return ""
-
     try:
-        client = openai.Client(api_key=api_key, base_url=base_url)
+        client = get_boson_client()
         response = client.chat.completions.create(
             model="Qwen3-32B-non-thinking-Hackathon",
             messages=_build_ai_payload(topic_prompt),

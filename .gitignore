@@ -13,3 +13,4 @@ wheels/
 *.DS_Store
 api_doc.md
 output/
+scripts/
