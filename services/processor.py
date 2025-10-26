@@ -449,8 +449,7 @@ async def agenerate_audio_with_persona(
         )
 
     if line_index is not None:
-        potential_wav = f"bests/{persona_key}_{line_index}_best.wav"
-        potential_wav = Path(potential_wav)
+        potential_wav = Path("assets") / "bests" / f"{persona_key}_{line_index}_best.wav"
         if potential_wav.exists():
             audio_b64 = base64.b64encode(potential_wav.read_bytes()).decode("utf-8")
             logger.info(f"Using cached best audio for line {line_index}.")
