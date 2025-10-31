@@ -4,14 +4,7 @@ from typing import List, Optional
 
 from pydantic import Field, model_validator
 
-from domain import APIModel, AudioKind
-
-class AudioChunk(APIModel):
-    chunk_id: str = Field(description="Identifier of the audio chunk.")
-    kind: AudioKind = Field(description="Category of the audio chunk.")
-    transcript: str = Field(description="Transcript associated with the audio chunk.")
-    speaker: str = Field(description="Persona voice associated with the audio chunk.")
-    audio_base64: str = Field(description="Base64-encoded audio data.")
+from domain import APIModel, AudioChunk, AudioKind
 
 
 class AudioFetchResponse(APIModel):

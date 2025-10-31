@@ -45,3 +45,13 @@ class AudioKind(StrEnum):
     GENERAL = "general"
     SUPERCHAT = "superchat"
     GIFT = "gift"
+
+
+class AudioChunk(APIModel):
+    """Represents an audio payload queued for playback."""
+
+    chunk_id: str = Field(description="Identifier of the audio chunk.")
+    kind: AudioKind = Field(description="Category of the audio chunk.")
+    transcript: str = Field(description="Transcript associated with the audio chunk.")
+    speaker: str = Field(description="Persona voice associated with the audio chunk.")
+    audio_base64: str = Field(description="Base64-encoded audio data.")

@@ -1,4 +1,5 @@
-from .audio import AudioChunk, AudioFetchResponse, InterruptRequest, InterruptResponse
+from domain import AudioChunk
+from .audio import AudioFetchResponse, InterruptRequest, InterruptResponse
 from .messages import (
     AIMessageRequest,
     AIMessageResponse,
