@@ -1,27 +1,18 @@
-"""Domain models shared with the FastAPI backend."""
+"""Pydantic models shared across API layers (domain level)."""
 
 from __future__ import annotations
 
 from datetime import datetime
-from enum import Enum
+from enum import Enum, StrEnum
 from typing import Optional
 
-from pydantic import BaseModel, Field
-
-try:  # Pydantic v2 introduces ConfigDict
-    from pydantic import ConfigDict
-except ImportError:  # pragma: no cover - fallback for v1
-    ConfigDict = None
+from pydantic import BaseModel, Field, ConfigDict
 
 
 class APIModel(BaseModel):
     """Base model that keeps field aliases aligned with the frontend."""
 
-    if ConfigDict is not None:  # pragma: no branch - best effort compatibility
-        model_config = ConfigDict(populate_by_name=True)
-    else:  # pragma: no cover - fallback for pydantic v1
-        class Config:  # type: ignore[override]
-            allow_population_by_field_name = True
+    model_config = ConfigDict(populate_by_name=True)
 
 
 class MessageType(str, Enum):
@@ -50,4 +41,7 @@ class Message(APIModel):
     gift: Optional[Gift] = None
 
 
-__all__ = ["APIModel", "Gift", "Message", "MessageType"]
+class AudioKind(StrEnum):
+    GENERAL = "general"
+    SUPERCHAT = "superchat"
+    GIFT = "gift"

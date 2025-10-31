@@ -34,7 +34,8 @@ from config import (
     LLM_SYSTEM_PROMPT,
     MODIFY_SCRIPT_PROMPT_TEMPLATE,
 )
-from services.audio import AudioKind, enqueue_audio_chunk, reset_audio_queue
+from domain import AudioKind
+from services.audio import enqueue_audio_chunk, reset_audio_queue
 from services.clients import get_boson_client, get_redis_client
 from services.interrupts import (
     InterruptRecord,

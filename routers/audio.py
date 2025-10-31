@@ -5,19 +5,18 @@ import logging
 from fastapi import APIRouter, status
 
 from schemas import (
-    AudioEnqueueRequest,
     AudioFetchResponse,
     InterruptRequest,
     InterruptResponse,
 )
-from services.audio import count_audio_chunks, enqueue_audio_chunk, fetch_audio_chunks
+from services.audio import count_audio_chunks, fetch_audio_chunks
 from services.interrupts import InterruptResult, register_interrupt
 
-router = APIRouter(prefix="/audio", tags=["audio"])
+router = APIRouter(prefix="/api/v1", tags=["audio"])
 logger = logging.getLogger(__name__)
 
 
-@router.get("", response_model=AudioFetchResponse)
+@router.get("/audio", response_model=AudioFetchResponse, status_code=status.HTTP_200_OK)
 async def pull_audio() -> AudioFetchResponse:
     """Return queued audio chunks in playback order."""
 
@@ -27,7 +26,7 @@ async def pull_audio() -> AudioFetchResponse:
     return AudioFetchResponse(chunks=raw_chunks)
 
 
-@router.get("/count")
+@router.get("/count", status_code=status.HTTP_200_OK)
 async def audio_queue_count() -> dict:
     """Return the number of pending audio chunks."""
 
@@ -36,22 +35,11 @@ async def audio_queue_count() -> dict:
     return {"count": count}
 
 
-@router.post("", status_code=status.HTTP_202_ACCEPTED)
-async def push_audio(request: AudioEnqueueRequest) -> dict:
-    """Accept a new audio chunk and enqueue it for later playback."""
-
-    chunk_id = enqueue_audio_chunk(
-        request.kind,
-        request.audio_base64,
-        transcript=request.transcript,
-        speaker=request.speaker,
-    )
-    logger.info("Received audio chunk %s via push for kind %s.", chunk_id, request.kind.value)
-
-    return {"status": "accepted", "chunk_id": chunk_id}
-
-
-@router.post("/interrupt", response_model=InterruptResponse)
+@router.post(
+    "/interrupt",
+    response_model=InterruptResponse,
+    status_code=status.HTTP_202_ACCEPTED,
+)
 async def trigger_interrupt(request: InterruptRequest) -> InterruptResponse:
     """Register an interrupt such as a superchat or gift reaction."""
 

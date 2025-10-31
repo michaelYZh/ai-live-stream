@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Iterable, List
 
-from type import Gift, Message, MessageType
+from domain import Gift, Message, MessageType
 
 
 _MESSAGES: List[Message] = []

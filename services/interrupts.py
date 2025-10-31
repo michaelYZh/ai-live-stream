@@ -7,7 +7,7 @@ from dataclasses import dataclass
 from typing import Optional
 from uuid import uuid4
 
-from services.audio import AudioKind
+from domain import AudioKind
 from services.clients import get_redis_client
 
 

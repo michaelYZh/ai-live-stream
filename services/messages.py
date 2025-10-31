@@ -7,10 +7,15 @@ from datetime import datetime, timedelta, timezone
 from typing import Iterable, List
 from uuid import uuid4
 
-from db import (calculate_revenue, fetch_messages, insert_message,
-                message_count, seed_if_empty)
+from db import (
+    calculate_revenue,
+    fetch_messages,
+    insert_message,
+    message_count,
+    seed_if_empty,
+)
+from domain import Gift, Message, MessageType
 from schemas.messages import MessageCreate
-from type import Gift, Message, MessageType
 
 GIFT_CATALOG: dict[str, tuple[str, int]] = {
     "spark": ("Quantum Spark", 5),

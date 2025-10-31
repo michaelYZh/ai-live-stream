@@ -5,12 +5,22 @@ from __future__ import annotations
 from typing import List
 
 from fastapi import APIRouter, status
-from schemas.messages import (AIMessageRequest, AIMessageResponse,
-                              MessageCreate, RevenueBreakdown, RevenueResponse,
-                              ViewCountResponse)
-from services.messages import (create_ai_message, create_message, list_messages,
-                               revenue_totals, view_count)
-from type import Message
+from domain import Message
+from schemas import (
+    AIMessageRequest,
+    AIMessageResponse,
+    MessageCreate,
+    RevenueBreakdown,
+    RevenueResponse,
+    ViewCountResponse,
+)
+from services.messages import (
+    create_ai_message,
+    create_message,
+    list_messages,
+    revenue_totals,
+    view_count,
+)
 
 router = APIRouter(prefix="/api/v1", tags=["messages"])
 
@@ -53,6 +63,3 @@ def create_ai_message_endpoint(payload: AIMessageRequest) -> AIMessageResponse:
 
     message = create_ai_message(payload.prompt)
     return AIMessageResponse(message=message.content or "")
-
-
-__all__ = ["router"]

@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from type import APIModel, Gift, Message, MessageType
+from domain import APIModel, Gift, MessageType
 
 
 class MessageCreate(APIModel):
@@ -36,12 +36,3 @@ class AIMessageRequest(APIModel):
 class AIMessageResponse(APIModel):
     message: str
 
-
-__all__ = [
-    "AIMessageRequest",
-    "AIMessageResponse",
-    "MessageCreate",
-    "RevenueBreakdown",
-    "RevenueResponse",
-    "ViewCountResponse",
-]

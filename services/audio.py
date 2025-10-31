@@ -1,16 +1,10 @@
 from __future__ import annotations
 
 import json
-from enum import StrEnum
 from typing import Dict, List
 
+from domain import AudioKind
 from services.clients import get_redis_client
-
-
-class AudioKind(StrEnum):
-    GENERAL = "general"
-    SUPERCHAT = "superchat"
-    GIFT = "gift"
 
 
 AUDIO_QUEUE_KEY = "stream:audio:queue"
