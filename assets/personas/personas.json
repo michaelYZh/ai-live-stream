@@ -1,0 +1,22 @@
+{
+  "speed": {
+    "audio": "personas/audio/speed_voice.wav",
+    "transcript": "personas/transcripts/speed.txt",
+    "scene_desc": "personas/scene_desc/speed.txt"
+  },
+  "trump": {
+    "audio": "personas/audio/chinese_trump_voice.wav",
+    "transcript": "personas/transcripts/chinese_trump.txt",
+    "scene_desc": "personas/scene_desc/chinese_trump.txt"
+  },
+  "peter": {
+    "audio": "personas/audio/peter_griffin_voice.wav",
+    "transcript": "personas/transcripts/peter.txt",
+    "scene_desc": "personas/scene_desc/peter.txt"
+  },
+  "spongebob": {
+    "audio": "personas/audio/spongebob_voice.wav",
+    "transcript": "personas/transcripts/spongebob.txt",
+    "scene_desc": "personas/scene_desc/spongebob.txt"
+  }
+}

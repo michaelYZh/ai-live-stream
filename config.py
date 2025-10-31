@@ -1,21 +1,26 @@
+import json
 import os
 from pathlib import Path
+from typing import Dict, Any
 
 from dotenv import load_dotenv
 
 load_dotenv(override=True)
 
-BOSON_API_KEYS = os.getenv("BOSON_API_KEYS", "").split(",")
+BOSON_API_KEYS = [
+    key.strip()
+    for key in os.getenv("BOSON_API_KEYS", "").split(",")
+    if key.strip()
+]
 if not BOSON_API_KEYS:
-    raise RuntimeError(
-        "BOSON_API_KEYS must be set in the environment."
-    )
+    raise RuntimeError("BOSON_API_KEYS must be set in the environment.")
+
 BOSON_BASE_URL = os.getenv("BOSON_BASE_URL", "https://hackathon.boson.ai/v1")
 REDIS_URL = os.getenv("REDIS_URL", "redis://localhost:6379/0")
 
 ROOT_DIR = Path(__file__).resolve().parent
 ASSETS_DIR = ROOT_DIR / "assets"
-REFERENCE_AUDIO_DIR = ASSETS_DIR / "reference_audio"
+PERSONAS_DIR = ASSETS_DIR / "personas"
 OUTPUT_AUDIO_DIR = ROOT_DIR / "output"
 
 TTS_MODEL = os.getenv("TTS_MODEL", "higgs-audio-generation-Hackathon")
@@ -27,30 +32,6 @@ DEFAULT_GIFT_PROMPT = os.getenv(
 )
 SAVE_TTS_WAV = os.getenv("SAVE_TTS_WAV", "false").lower() in {"1", "true", "yes"}
 PROCESSOR_LOOP_INTERVAL = float(os.getenv("PROCESSOR_LOOP_INTERVAL", "0.5"))
-
-PETER_GRIFFIN_REFERENCE_TRANSCRIPT = """
-I walked into the kitchen and sat down at the table. I looked with a Grimace at the questionable meal Lois
-had placed in front of me. Of course I'd never tell her how disgusted I was with her cooking, but somehow I think she knew.
-Lois had always been full of energy and life, but lately I had begun to grow more aware of her aging. The bright exuberant
-eyes that I had fallen in love with were now beginning to grow dull and listless with the long fatigue of a weary life.
-"""
-
-SPEED_REFERENCE_TRANSCRIPT = """
-This is our first China stream, y'all! We are, bro chat, we actually here, bro! We are actually here. 
-Chat, when I told y'all, bro, when I tell y'all I've been wanting to go to China since I was a kid, bro! 
-So Chat, this is honestly crazy cuz Chat, we learned so much about China at school.
-"""
-
-CHINESE_TRUMP_REFERENCE_TRANSCRIPT = """
-They tried to steal my account, they tried to silence me, they want me gone, they want me disappear. 
-But guess what? They almost hit me. That was a close one, but they always miss. 
-Now I'm back! Stronger, louder, and funnier than ever.
-"""
-
-SPONGEBOB_REFERENCE_TRANSCRIPT = """
-All right! Ooops! I guess I rip my pants again. I'm on my way! Ready for another great day together, friend.
-Hey, guys! Better pack some ice. It's gonna be a hot one. What is that smell.
-"""
 
 # DEFAULT_SCRIPT = """
 # [Speed] Yo yo yo! We are LIVE! What's good, chat! It's your boy, Speed! Y'all sent me this paper, "Attention Is All You Need." Bro, they finally get it! They wrote a paper about me!
@@ -96,35 +77,6 @@ DEFAULT_SCRIPT = """
 
 [Speed] THAT'S IT! I'M DONE! THIS STREAM IS OVER! I AM OUT! PEACE!
 """
-
-PERSONA_REFERENCES = {
-    "speed": {
-        "path": REFERENCE_AUDIO_DIR / "speed_voice.wav",
-        "transcript": SPEED_REFERENCE_TRANSCRIPT,
-        "scene_desc": "The voice should be extremely high-energy and loud, similar to iShowSpeed's speaking style. The recording must sound clean, close-mic, and studio-quality, with no background noise. Speech should be fast, with sharp emphasis, sudden loudness spikes, and quick changes in pitch and emotional tone.",
-    },
-    "trump": {
-        "path": REFERENCE_AUDIO_DIR / "chinese_trump_voice.wav",
-        "transcript": CHINESE_TRUMP_REFERENCE_TRANSCRIPT,
-        "scene_desc": """
-In this audio, the person is impersonating Donald Trump's voice. The pacing is measured, with strategic pauses to let insults land. The delivery should feel like a series of dismissive proclamations, consistently patronizing the streamer and methodically building up the roast with each message. The speaker is in a quiet room with NO music.
-""",
-    },
-    "peter": {
-        "path": REFERENCE_AUDIO_DIR / "peter_griffin_voice.wav",
-        "transcript": PETER_GRIFFIN_REFERENCE_TRANSCRIPT,
-        "scene_desc": """
-The voice is a clear impersonation of Peter Griffin. It must be highly nasal and slightly gravelly, with a distinct, lazy New England accent. The delivery is goofy and meandering, as if he's just saying whatever comes to mind. His iconic, wheezy "Heheheheh" laugh or snort is a key characteristic. The tone should be annoyingly playful and trolling. The recording must be clean, close-mic, and studio-quality with no background noise.
-        """,
-    },
-    "spongebob": {
-        "path": REFERENCE_AUDIO_DIR / "spongebob_voice.wav",
-        "transcript": SPONGEBOB_REFERENCE_TRANSCRIPT,
-        "scene_desc": """
-This is a strong impersonation of Spongebob Squarepants. The voice must be very high-pitched, slightly nasal, and full of bubbly, cheerful energy. The pitch should wobble and often crack with excitement. His iconic high-pitched, rapid giggle ("Ah-hah-hah-hah") is essential. The delivery is bouncy and eager, but always polite and innocent. The recording must be clean, close-mic, and studio-quality with no background noise.
-        """,
-    },
-}
 
 MODIFY_SCRIPT_PROMPT_TEMPLATE = """
 <core_task>
@@ -201,3 +153,33 @@ You should first react to new_superchat and Superchat_name if Superchat_name is 
 Please continue the script using approximately the same number of lines as provided in remaining_lines.
 """
 LLM_SYSTEM_PROMPT = "You are an expert scriptwriter specializing in creating authentic, engaging, and voice-ready livestream transcripts. Your task is to continue an ongoing script based on new user comments (superchats)."
+
+
+def _load_persona_references() -> Dict[str, Dict[str, Any]]:
+    personas_path = PERSONAS_DIR / "personas.json"
+    with personas_path.open("r", encoding="utf-8") as fp:
+        persona_data = json.load(fp)
+
+    references: Dict[str, Dict[str, Any]] = {}
+    for persona_key, config in persona_data.items():
+        audio_path = ASSETS_DIR / config["audio"]
+        transcript_path = ASSETS_DIR / config["transcript"]
+        scene_desc_path = ASSETS_DIR / config["scene_desc"]
+
+        if not audio_path.exists():
+            raise FileNotFoundError(f"Reference audio missing for persona '{persona_key}': {audio_path}")
+        if not transcript_path.exists():
+            raise FileNotFoundError(f"Transcript missing for persona '{persona_key}': {transcript_path}")
+        if not scene_desc_path.exists():
+            raise FileNotFoundError(f"Scene description missing for persona '{persona_key}': {scene_desc_path}")
+
+        references[persona_key] = {
+            "path": audio_path,
+            "transcript": transcript_path.read_text(encoding="utf-8").strip(),
+            "scene_desc": scene_desc_path.read_text(encoding="utf-8").strip(),
+        }
+
+    return references
+
+
+PERSONA_REFERENCES = _load_persona_references()
