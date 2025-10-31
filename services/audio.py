@@ -1,16 +1,10 @@
 from __future__ import annotations
 
 import json
-from enum import StrEnum
-from typing import Dict, List
+from typing import List
 
+from domain import AudioChunk, AudioKind
 from services.clients import get_redis_client
-
-
-class AudioKind(StrEnum):
-    GENERAL = "general"
-    SUPERCHAT = "superchat"
-    GIFT = "gift"
 
 
 AUDIO_QUEUE_KEY = "stream:audio:queue"
@@ -40,11 +34,11 @@ def enqueue_audio_chunk(
     return chunk_id
 
 
-def fetch_audio_chunks() -> List[Dict[str, object]]:
+def fetch_audio_chunks() -> List[AudioChunk]:
     """Fetch and remove pending audio chunks in chronological order."""
 
     client = get_redis_client()
-    chunks: List[Dict[str, object]] = []
+    chunks: List[AudioChunk] = []
 
     while True:
         payload = client.lpop(AUDIO_QUEUE_KEY)
@@ -70,13 +64,13 @@ def fetch_audio_chunks() -> List[Dict[str, object]]:
             raise ValueError("Audio chunk payload missing chunk_id.")
 
         chunks.append(
-            {
-                "chunk_id": str(chunk_id),
-                "audio_base64": data.get("audio_base64", ""),
-                "kind": kind,
-                "transcript": transcript,
-                "speaker": speaker,
-            }
+            AudioChunk(
+                chunk_id=str(chunk_id),
+                audio_base64=data.get("audio_base64", ""),
+                kind=kind,
+                transcript=transcript,
+                speaker=speaker,
+            )
         )
 
     return chunks

@@ -2,33 +2,19 @@ from __future__ import annotations
 
 from typing import List, Optional
 
-from pydantic import BaseModel, Field, model_validator
-from services.audio import AudioKind
+from pydantic import Field, model_validator
+
+from domain import APIModel, AudioChunk, AudioKind
 
 
-class AudioEnqueueRequest(BaseModel):
-    kind: AudioKind = Field(description="Category of audio being enqueued.")
-    audio_base64: str = Field(description="Base64-encoded audio chunk.")
-    transcript: str = Field(description="Text transcript associated with the audio chunk.")
-    speaker: str = Field(description="Identifier for the persona voice used in the audio chunk.")
-
-
-class AudioChunk(BaseModel):
-    chunk_id: str = Field(description="Identifier of the audio chunk.")
-    kind: AudioKind = Field(description="Category of the audio chunk.")
-    transcript: str = Field(description="Transcript associated with the audio chunk.")
-    speaker: str = Field(description="Persona voice associated with the audio chunk.")
-    audio_base64: str = Field(description="Base64-encoded audio data.")
-
-
-class AudioFetchResponse(BaseModel):
+class AudioFetchResponse(APIModel):
     chunks: List[AudioChunk] = Field(
         default_factory=list,
         description="Ordered collection of pending audio chunks ready for playback.",
     )
 
 
-class InterruptRequest(BaseModel):
+class InterruptRequest(APIModel):
     kind: AudioKind = Field(
         description="Type of interrupt to trigger (superchat or gift).")
     persona: Optional[str] = Field(
@@ -52,7 +38,7 @@ class InterruptRequest(BaseModel):
         return values
 
 
-class InterruptResponse(BaseModel):
+class InterruptResponse(APIModel):
     interrupt_id: str = Field(
         description="Identifier assigned to the registered interrupt.")
     kind: AudioKind = Field(description="Kind of interrupt that was queued.")
